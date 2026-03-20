@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Long Term Goals - AuraFlow</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+    <style>
+        
+        body {
+            font-family: 'Lora', serif;
+            font-style: italic;
+        }
+        .font-playfair { 
+            font-family: 'Playfair Display', serif; 
+        }
+        .modal-glassmorphism {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            z-index: 51;
+        }
+        .modal-open .modal-glassmorphism {
+            transform: scale(1);
+            opacity: 1;
+        }
+        #goalModal, #confirmationModal {
+            z-index: 50;
+        }
+        .hearts-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1;
+        }
+        .heart {
+            position: absolute; bottom: -50px;
+            animation: floatUp linear infinite;
+        }
+        .heart svg { width: 100%; height: 100%; fill: currentColor; filter: drop-shadow(0 0 5px rgba(0,0,0,0.1)); }
+        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-120vh); opacity: 0; } }
+
+        
+        .decorative-subheading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .decorative-subheading::before,
+        .decorative-subheading::after {
+            content: '';
+            height: 1px;
+            width: 4rem;
+            background: linear-gradient(to right, transparent, rgba(219, 39, 119, 0.6), transparent);
+        }
+        .modal-decorative-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .modal-decorative-header .dot {
+            width: 0.375rem; height: 0.375rem;
+            background-color: #ec4899;
+            border-radius: 50%;
+        }
+        .modal-decorative-header .line {
+            flex-grow: 1; height: 1px;
+            background-color: rgba(236, 72, 153, 0.4);
+        }
+
+        /* --- Long Term Goals Page Specific Styles --- */
+        .goal-section-card {
+            background: rgba(252, 231, 243, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        .goal-section-title {
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        .goal-section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(to right, rgba(236, 72, 153, 0), rgba(236, 72, 153, 0.8), rgba(236, 72, 153, 0));
+        }
+        .goal-display-card {
+            background-color: rgba(255, 255, 255, 0.7);
+            border-left: 4px solid #db2777;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: popInGoal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0; /* Start hidden for animation */
+        }
+        @keyframes popInGoal { to { opacity: 1; transform: scale(1); } }
+        
+        /* --- Progress Bar Styles --- */
+        .progress-bar-container {
+            background-color: rgba(219, 39, 119, 0.2);
+            border-radius: 9999px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .progress-bar-fill {
+            background-color: #db2777;
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* --- Milestone & Description Styles --- */
+        .milestone-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .milestone-list.visible {
+            max-height: 500px;
+        }
+        .goal-description-text {
+            background-color: rgba(249, 168, 212, 0.3);
+            color: #881337;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-style: italic;
+        }
+        .milestone-item { font-style: normal; }
+        .milestone-item label { display: flex; align-items: center; cursor: pointer; }
+        .milestone-item input[type="checkbox"] { display: none; }
+        .milestone-item .custom-checkbox {
+            width: 1rem; height: 1rem; border: 2px solid #ec4899; border-radius: 3px;
+            display: inline-block; margin-right: 0.75rem; position: relative;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+        .milestone-item input:checked + .custom-checkbox { background-color: #ec4899; }
+        .milestone-item input:checked + .custom-checkbox::after {
+            content: '✔'; color: white; font-size: 0.7rem;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .milestone-item span { transition: text-decoration 0.2s, color 0.2s; }
+        .milestone-item input:checked ~ span { text-decoration: line-through; color: #881337; }
+        
+        .modal-input, .modal-textarea {
+            font-style: normal; background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #f9a8d4;
+        }
+        .modal-input:focus, .modal-textarea:focus {
+            outline: none; border-color: #ec4899;
+            box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-pink-200 to-rose-300 min-h-screen p-4 sm:p-6 md:p-8">
+
+    <div id="hearts-container" class="hearts-container"></div>
+
+    <div class="container mx-auto max-w-7xl relative z-10">
+        <!-- Header -->
+        <header class="mb-4">
+            <h1 class="text-3xl md:text-4xl text-slate-800 font-lora-italic">Long Term Goals</h1>
+        </header>
+
+        <!-- Subheading -->
+        <div class="text-center mb-8 md:mb-12">
+            <div class="decorative-subheading">
+                <p class="text-xl md:text-2xl text-rose-800">Organize your plans and build your future</p>
+            </div>
+        </div>
+
+        <!-- Goal Sections Grid -->
+        <main class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <!-- Career Section -->
+            <section class="goal-section-card rounded-2xl p-6">
+                <div class="text-center mb-4">
+                    <h2 class="goal-section-title font-playfair text-2xl text-rose-900">📌 Career</h2>
+                </div>
+                <div id="goals-container-career" class="space-y-4 mb-4 flex-grow"></div>
+                <button data-category="career" class="add-goal-btn w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg transition-colors mt-auto">
+                    Add New Goal
+                </button>
+            </section>
+
+            <!-- Personal Growth Section -->
+            <section class="goal-section-card rounded-2xl p-6">
+                <div class="text-center mb-4">
+                    <h2 class="goal-section-title font-playfair text-2xl text-rose-900">📌 Personal Growth</h2>
+                </div>
+                <div id="goals-container-personal" class="space-y-4 mb-4 flex-grow"></div>
+                <button data-category="personal" class="add-goal-btn w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg transition-colors mt-auto">
+                    Add New Goal
+                </button>
+            </section>
+
+            <!-- Health and Wellness Section -->
+            <section class="goal-section-card rounded-2xl p-6">
+                <div class="text-center mb-4">
+                    <h2 class="goal-section-title font-playfair text-2xl text-rose-900">📌 Health & Wellness</h2>
+                </div>
+                <div id="goals-container-health" class="space-y-4 mb-4 flex-grow"></div>
+                <button data-category="health" class="add-goal-btn w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg transition-colors mt-auto">
+                    Add New Goal
+                </button>
+            </section>
+
+            <!-- Finance Section -->
+            <section class="goal-section-card rounded-2xl p-6">
+                <div class="text-center mb-4">
+                    <h2 class="goal-section-title font-playfair text-2xl text-rose-900">📌 Finance</h2>
+                </div>
+                <div id="goals-container-finance" class="space-y-4 mb-4 flex-grow"></div>
+                <button data-category="finance" class="add-goal-btn w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg transition-colors mt-auto">
+                    Add New Goal
+                </button>
+            </section>
+        </main>
+
+        <!-- Back to Main Menu Button -->
+        <div class="text-center mt-8 md:mt-12">
+            <a href="index.html" class="text-pink-600 hover:text-pink-800 font-bold transition-colors">
+                &larr; Back to Main Menu
+            </a>
+        </div>
+    </div>
+
+    <!-- Goal Modal -->
+    <div id="goalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-2xl w-full relative">
+            <button id="closeGoalModal" class="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-2xl font-bold">&times;</button>
+            <div class="modal-decorative-header">
+                <span class="dot"></span>
+                <div class="line"></div>
+                <h3 id="modalTitle" class="font-playfair text-2xl text-black italic text-center whitespace-nowrap">Add a New Goal</h3>
+                <div class="line"></div>
+                <span class="dot"></span>
+            </div>
+            <div class="space-y-4">
+                <input type="hidden" id="goalId"><input type="hidden" id="goalCategory">
+                <div>
+                    <label for="goalTitleInput" class="block text-sm font-bold text-slate-800 mb-1" style="font-style: normal;">Goal Title (Required)</label>
+                    <input type="text" id="goalTitleInput" placeholder="e.g., Master a new programming language" class="modal-input w-full p-2 rounded-md">
+                </div>
+                <div>
+                    <label for="goalDescriptionInput" class="block text-sm font-bold text-slate-800 mb-1" style="font-style: normal;">Description (Optional)</label>
+                    <textarea id="goalDescriptionInput" placeholder="Describe what this goal means to you..." rows="3" class="modal-textarea w-full p-2 rounded-md"></textarea>
+                </div>
+                <div>
+                    <label for="goalMilestonesInput" class="block text-sm font-bold text-slate-800 mb-1" style="font-style: normal;">Milestones (one per line)</label>
+                    <textarea id="goalMilestonesInput" placeholder="- Complete a beginner's course..." rows="4" class="modal-textarea w-full p-2 rounded-md"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button id="saveGoalButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg">Save Goal</button>
+                <button id="cancelGoalButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-sm w-full text-center">
+            <h3 class="font-playfair text-xl text-black italic mb-4">Confirm Deletion</h3>
+            <p class="text-gray-700 mb-6" style="font-style: normal;">Are you sure? This action cannot be undone.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirmDeleteButton" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-lg">Yes, Delete</button>
+                <button id="cancelDeleteButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- DOM Element References ---
+            const goalModal = document.getElementById('goalModal');
+            const closeGoalModalButton = document.getElementById('closeGoalModal');
+            const saveGoalButton = document.getElementById('saveGoalButton');
+            const cancelGoalButton = document.getElementById('cancelGoalButton');
+            const modalTitle = document.getElementById('modalTitle');
+            const goalIdInput = document.getElementById('goalId');
+            const goalCategoryInput = document.getElementById('goalCategory');
+            const goalTitleInput = document.getElementById('goalTitleInput');
+            const goalDescriptionInput = document.getElementById('goalDescriptionInput');
+            const goalMilestonesInput = document.getElementById('goalMilestonesInput');
+            const addGoalButtons = document.querySelectorAll('.add-goal-btn');
+
+            const confirmationModal = document.getElementById('confirmationModal');
+            const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+            const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+            let itemToDelete = { id: null, category: null };
+
+            // --- Storage Helpers ---
+            const getGoals = (category) => {
+                const goals = localStorage.getItem(`auraFlowGoals_${category}`);
+                return goals ? JSON.parse(goals) : [];
+            };
+            const saveGoals = (category, goals) => {
+                localStorage.setItem(`auraFlowGoals_${category}`, JSON.stringify(goals));
+            };
+
+            // --- Modal Logic ---
+            const openModal = (modal) => {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('flex', 'modal-open'), 10);
+            };
+            const closeModal = (modal) => {
+                modal.classList.remove('modal-open');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            };
+
+            // --- Goal Logic ---
+            const migrateGoals = (category) => {
+                let goals = getGoals(category);
+                let needsSave = false;
+                goals.forEach(goal => {
+                    if (goal.milestones && (goal.milestones.length === 0 || typeof goal.milestones[0] === 'string')) {
+                        needsSave = true;
+                        goal.milestones = goal.milestones.map(m => ({ text: m, completed: false }));
+                    }
+                });
+                if (needsSave) {
+                    saveGoals(category, goals);
+                }
+            };
+
+            const renderGoals = (category) => {
+                migrateGoals(category);
+                const container = document.getElementById(`goals-container-${category}`);
+                container.innerHTML = '';
+                const goals = getGoals(category);
+                
+                if (goals.length === 0) {
+                    container.innerHTML = `<p class="text-center text-gray-500 text-sm" style="font-style: normal;">No goals yet. Add one!</p>`;
+                    return;
+                }
+
+                goals.forEach((goal, index) => {
+                    const completedCount = goal.milestones.filter(m => m.completed).length;
+                    const totalCount = goal.milestones.length;
+                    const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+                    
+                    const descriptionHTML = goal.description ? `<li class="goal-description-text">"${goal.description}"</li>` : '';
+                    
+                    const milestonesHTML = goal.milestones.map((milestone, mIndex) => `
+                        <li class="milestone-item">
+                            <label>
+                                <input type="checkbox" class="milestone-checkbox" data-goal-id="${goal.id}" data-category="${category}" data-milestone-index="${mIndex}" ${milestone.completed ? 'checked' : ''}>
+                                <span class="custom-checkbox"></span>
+                                <span class="text-gray-800">${milestone.text}</span>
+                            </label>
+                        </li>
+                    `).join('');
+
+                    const goalCard = document.createElement('div');
+                    goalCard.className = 'goal-display-card p-4 rounded-lg shadow-sm';
+                    goalCard.dataset.goalId = goal.id;
+                    goalCard.style.animationDelay = `${index * 0.1}s`;
+                    goalCard.innerHTML = `
+                        <div class="flex justify-between items-start">
+                           <h4 class="font-playfair text-xl text-slate-900 not-italic font-semibold mb-1 pr-2">${goal.title}</h4>
+                           <span class="step-counter text-xs font-bold text-rose-600 bg-rose-100 px-2 py-1 rounded-full whitespace-nowrap" style="font-style: normal;">${completedCount}/${totalCount} steps</span>
+                        </div>
+                        <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progress}%;"></div></div>
+                        <button class="details-btn text-pink-600 font-bold text-sm mt-3" style="font-style: normal;">Details &darr;</button>
+                        <ul class="milestone-list mt-2 space-y-1">
+                            ${descriptionHTML}
+                            ${milestonesHTML}
+                            <li class="goal-actions flex justify-end space-x-2 mt-3">
+                                <button data-id="${goal.id}" data-category="${category}" class="edit-goal-btn bg-pink-200 hover:bg-pink-300 text-pink-800 font-bold py-1 px-3 rounded-md text-sm">Edit</button>
+                                <button data-id="${goal.id}" data-category="${category}" class="delete-goal-btn bg-rose-200 hover:bg-rose-300 text-rose-800 font-bold py-1 px-3 rounded-md text-sm">Delete</button>
+                            </li>
+                        </ul>
+                    `;
+                    container.appendChild(goalCard);
+                });
+            };
+
+            const renderAllGoals = () => ['career', 'personal', 'health', 'finance'].forEach(renderGoals);
+
+            // --- Event Handlers ---
+            addGoalButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const category = e.target.dataset.category;
+                    const modalTitleHeader = modalTitle.querySelector('h3') || modalTitle;
+                    modalTitleHeader.textContent = `Add New ${category.charAt(0).toUpperCase() + category.slice(1)} Goal`;
+                    goalIdInput.value = '';
+                    goalCategoryInput.value = category;
+                    goalTitleInput.value = '';
+                    goalDescriptionInput.value = '';
+                    goalMilestonesInput.value = '';
+                    openModal(goalModal);
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                const detailsBtn = e.target.closest('.details-btn');
+                const editBtn = e.target.closest('.edit-goal-btn');
+                const deleteBtn = e.target.closest('.delete-goal-btn');
+                const milestoneCheckbox = e.target.closest('.milestone-checkbox');
+
+                if (detailsBtn) {
+                    const list = detailsBtn.nextElementSibling;
+                    list.classList.toggle('visible');
+                    detailsBtn.innerHTML = list.classList.contains('visible') ? 'Hide &uarr;' : 'Details &darr;';
+                }
+                
+                if (milestoneCheckbox) {
+                    const { goalId, category, milestoneIndex } = milestoneCheckbox.dataset;
+                    let goals = getGoals(category);
+                    const goal = goals.find(g => g.id == goalId);
+                    if (goal) {
+                        goal.milestones[milestoneIndex].completed = milestoneCheckbox.checked;
+                        saveGoals(category, goals);
+                        // Update UI without full re-render for a smoother experience
+                        const card = document.querySelector(`.goal-display-card[data-goal-id='${goalId}']`);
+                        const completedCount = goal.milestones.filter(m => m.completed).length;
+                        const totalCount = goal.milestones.length;
+                        const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+                        card.querySelector('.step-counter').textContent = `${completedCount}/${totalCount} steps`;
+                        card.querySelector('.progress-bar-fill').style.width = `${progress}%`;
+                    }
+                }
+                
+                if (editBtn) {
+                    const { id, category } = editBtn.dataset;
+                    const goals = getGoals(category);
+                    const goal = goals.find(g => g.id == id);
+                    if (goal) {
+                        const modalTitleHeader = modalTitle.querySelector('h3') || modalTitle;
+                        modalTitleHeader.textContent = `Edit ${category.charAt(0).toUpperCase() + category.slice(1)} Goal`;
+                        goalIdInput.value = goal.id;
+                        goalCategoryInput.value = category;
+                        goalTitleInput.value = goal.title;
+                        goalDescriptionInput.value = goal.description;
+                        goalMilestonesInput.value = goal.milestones.map(m => m.text).join('\n');
+                        openModal(goalModal);
+                    }
+                }
+                
+                if (deleteBtn) {
+                    itemToDelete = { id: deleteBtn.dataset.id, category: deleteBtn.dataset.category };
+                    openModal(confirmationModal);
+                }
+            });
+
+            saveGoalButton.addEventListener('click', () => {
+                const category = goalCategoryInput.value;
+                const id = goalIdInput.value;
+                const title = goalTitleInput.value.trim();
+                const description = goalDescriptionInput.value.trim();
+                
+                if (!title) { alert('Please fill in the goal title.'); return; }
+
+                let goals = getGoals(category);
+                if (id) { // Editing
+                    const existingGoal = goals.find(g => g.id == id);
+                    const newMilestoneTexts = goalMilestonesInput.value.split('\n').map(m => m.trim()).filter(Boolean);
+                    
+                    existingGoal.title = title;
+                    existingGoal.description = description;
+                    // Preserve completion status for existing milestones
+                    existingGoal.milestones = newMilestoneTexts.map(text => {
+                        const oldMilestone = existingGoal.milestones.find(m => m.text === text);
+                        return { text, completed: oldMilestone ? oldMilestone.completed : false };
+                    });
+                } else { // Adding new
+                    const milestones = goalMilestonesInput.value.split('\n').map(m => ({ text: m.trim(), completed: false })).filter(m => m.text);
+                    goals.push({ id: Date.now(), title, description, milestones });
+                }
+                saveGoals(category, goals);
+                renderGoals(category);
+                closeModal(goalModal);
+            });
+
+            confirmDeleteButton.addEventListener('click', () => {
+                if (itemToDelete.id && itemToDelete.category) {
+                    let goals = getGoals(itemToDelete.category);
+                    goals = goals.filter(g => g.id != itemToDelete.id);
+                    saveGoals(itemToDelete.category, goals);
+                    renderGoals(itemToDelete.category);
+                }
+                closeModal(confirmationModal);
+                itemToDelete = { id: null, category: null };
+            });
+            
+            closeGoalModalButton.addEventListener('click', () => closeModal(goalModal));
+            cancelGoalButton.addEventListener('click', () => closeModal(goalModal));
+            cancelDeleteButton.addEventListener('click', () => closeModal(confirmationModal));
+
+            // --- Background Animation ---
+            const heartsContainer = document.getElementById('hearts-container');
+            const heartColors = ['text-pink-300', 'text-pink-400', 'text-rose-400'];
+            for (let i = 0; i < 20; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                const color = heartColors[Math.floor(Math.random() * heartColors.length)];
+                const size = Math.random() * 2 + 1;
+                const duration = Math.random() * 10 + 8;
+                const delay = Math.random() * 12;
+                const left = Math.random() * 100;
+                heart.style.cssText = `width:${size}rem; height:${size}rem; left:${left}vw; animation-duration:${duration}s; animation-delay:${delay}s;`;
+                heart.innerHTML = `<svg class="${color}" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>`;
+                heartsContainer.appendChild(heart);
+            }
+
+            // --- Initial Load ---
+            renderAllGoals();
+        });
+    </script>
+</body>
+</html>

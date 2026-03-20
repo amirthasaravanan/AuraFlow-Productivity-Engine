@@ -1,0 +1,3308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraFlow</title>
+    
+    <link rel="icon" type="image/png" href="auraflowicon.png">
+    <link rel="apple-touch-icon" href="auraflowicon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Global Styles --- */
+        body {
+            font-family: 'Lora', serif;
+            font-style: italic;
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .modal-glassmorphism {
+            background: rgba(255, 255, 255, 0.75); 
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6); 
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            z-index: 50; 
+        }
+        .modal-open .modal-glassmorphism {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* --- Z-index fix for confirmation modal --- */
+        #confirmationModal, #infoModal {
+            z-index: 60;
+        }
+
+        /* --- Notification Styles --- */
+        .main-notification {
+            width: 280px; /* Fixed width */
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: #831843; /* rose-800 */
+            animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            z-index: 20; /* Ensure it's above other content */
+        }
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* --- Main Menu Styles --- */
+        .main-menu-card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .main-menu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 15px -3px rgba(219, 39, 119, 0.2), 0 4px 6px -2px rgba(219, 39, 119, 0.1);
+        }
+        .greeting-container {
+            position: relative;
+            padding: 2rem;
+        }
+        .greeting-container::before, .greeting-container::after {
+            content: '';
+            position: absolute;
+            background: rgba(236, 72, 153, 0.15);
+            border-radius: 50%;
+            z-index: 0;
+        }
+        .greeting-container::before {
+            width: 200px; height: 200px; top: 50%; left: 50%;
+            transform: translate(-80%, -60%);
+        }
+        .greeting-container::after {
+            width: 150px; height: 150px; top: 50%; left: 50%;
+            transform: translate(-20%, -40%);
+        }
+        #greeting { position: relative; z-index: 1; }
+        #greeting span {
+            display: inline-block; opacity: 0; transform: translateY(20px);
+            animation: fadeInUp 0.5s forwards;
+        }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        .hearts-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1;
+        }
+        .heart {
+            position: absolute; bottom: -50px;
+            animation: floatUp linear infinite;
+        }
+        .heart svg { width: 100%; height: 100%; fill: currentColor; filter: drop-shadow(0 0 5px rgba(0,0,0,0.1)); }
+        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-120vh); opacity: 0; } }
+
+        /* --- Journal Page Styles --- */
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .diary-entry { line-height: 2; }
+        .writing-container { display: flex; flex-direction: column; height: calc(100vh - 10rem); }
+        .writing-area { flex-grow: 1; background-color: rgba(255, 255, 255, 0.5); border: none; outline: none; }
+        #hour-hand, #minute-hand, #second-hand { transform-origin: 50% 50%; transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.6, 1); }
+        .date-container { position: relative; display: inline-block; }
+        .date-container::before {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, rgba(236, 72, 153, 0) 70%);
+            border-radius: 50%; transform: translate(-50%, -50%); z-index: -1;
+            animation: pulseGlow 4s infinite ease-in-out;
+        }
+        @keyframes pulseGlow { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; } 50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.3; } }
+        
+        /* --- Past Entry Item Animation --- */
+        .past-entry-item {
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInEntry 0.5s ease-out forwards;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-in-out;
+            background-color: rgba(249, 168, 212, 0.8); /* pink-300 with 80% opacity */
+        }
+        @keyframes slideInEntry {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .past-entry-item:hover {
+            transform: scale(1.03) rotate(-1deg);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* --- New Paper Style for Journal Entry Modal --- */
+        .entry-paper {
+            background-color: #fff8fa; /* Very light pink */
+            padding: 1.5rem 1.5rem 1.5rem 3.5rem;
+            border-radius: 0.25rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: relative;
+            background-image: repeating-linear-gradient(
+                to bottom,
+                transparent,
+                transparent 29px,
+                rgba(244, 114, 182, 0.15) 30px
+            );
+            line-height: 30px;
+            font-family: 'Lora', serif;
+            font-style: italic;
+            font-weight: 500;
+            color: #5c2b29;
+            font-size: 1.1rem;
+            max-height: 70vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            flex-grow: 1;
+            margin-top: 1rem;
+            transition: background-color 0.3s ease;
+        }
+        .entry-paper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 2.5rem;
+            bottom: 0;
+            width: 1px;
+            background-color: rgba(244, 114, 182, 0.3);
+            transition: background-color 0.3s ease;
+        }
+        .entry-paper.editing {
+            background-color: #ffffff;
+            color: #1f2937;
+        }
+
+
+        /* --- Daily Checklist Styles --- */
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .task-item.completed {
+            background-color: rgba(249, 168, 212, 0.4);
+            color: #000;
+        }
+        .task-item.completed span {
+            text-decoration: line-through;
+        }
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .task-checkbox {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: 2px solid #ec4899;
+            border-radius: 0.25rem;
+            outline: none;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .task-checkbox:checked {
+            background-color: #ec4899;
+            border-color: #ec4899;
+        }
+        .task-checkbox:checked::after {
+            content: '✔';
+            color: white;
+            font-size: 0.85rem;
+            line-height: 1;
+        }
+        .delete-task-btn, .edit-task-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            line-height: 1;
+            padding: 0;
+            transition: color 0.2s;
+        }
+        .delete-task-btn {
+             color: #ef4444;
+        }
+        .delete-task-btn:hover {
+             color: #dc2626;
+        }
+        .edit-task-btn {
+            color: #ec4899;
+        }
+        .edit-task-btn:hover {
+            color: #db2777;
+        }
+        .plan-time-btn {
+            background: none;
+            border: none;
+            color: #ec4899;
+            cursor: pointer;
+            font-size: 1.25rem;
+            line-height: 1;
+            padding: 0;
+            margin-left: 0.5rem;
+            transition: color 0.2s;
+        }
+        .plan-time-btn:hover {
+            color: #db2777;
+        }
+        .task-time {
+            font-size: 1.125rem;
+            color: #be185d;
+            font-weight: 600;
+            opacity: 0;
+            animation: fadeInTime 0.3s ease-out forwards;
+            white-space: nowrap;
+        }
+        @keyframes fadeInTime {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+
+        /* --- Calendar Specific Styles --- */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .day-name {
+            font-weight: bold;
+            color: #ec4899;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(236, 72, 153, 0.3);
+        }
+        .calendar-day {
+            padding: 0.75rem 0.25rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+        }
+        .calendar-day.current-month {
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        .calendar-day.other-month {
+            color: #aaa;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .calendar-day.today {
+            background-color: #fbcfe8;
+            border: 2px solid #db2777;
+            font-weight: bold;
+            color: #db2777;
+        }
+        .calendar-day:hover {
+            background-color: #f9a8d4;
+            transform: translateY(-2px);
+        }
+        .calendar-day.has-tasks::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            width: 6px;
+            height: 6px;
+            background-color: #ec4899;
+            border-radius: 50%;
+        }
+        .calendar-day.today.has-tasks::after {
+            background-color: #db2777;
+        }
+        /* New Style for Special Dates (Brighter) */
+        .calendar-day.special-date {
+            background: linear-gradient(145deg, #fbcfe8, #f9a8d4); /* Brighter: pink-200 to pink-300 */
+            border: 1px solid #f472b6; /* pink-400 */
+            color: #881337; /* rose-900 */
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.2);
+        }
+        .calendar-day.special-date.today {
+            border: 2px solid #db2777;
+            box-shadow: 0 0 10px rgba(219, 39, 119, 0.5);
+        }
+
+        /* Appreciation Quote Styles (Enhanced) */
+        .appreciation-quote {
+            background: linear-gradient(45deg, #ffe4e6, #ffb6c1);
+            color: #880044;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 8px 15px rgba(255, 105, 180, 0.3), 0 0 20px rgba(255, 105, 180, 0.4);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            animation: popAndGlow 0.6s ease-out forwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes popAndGlow {
+            0% {
+                opacity: 0;
+                transform: scale(0.7);
+                box-shadow: 0 0 0 rgba(255, 105, 180, 0), 0 0 0 rgba(255, 105, 180, 0);
+            }
+            70% {
+                opacity: 1;
+                transform: scale(1.05);
+                box-shadow: 0 10px 20px rgba(255, 105, 180, 0.4), 0 0 30px rgba(255, 105, 180, 0.6);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 8px 15px rgba(255, 105, 180, 0.3), 0 0 20px rgba(255, 105, 180, 0.4);
+            }
+        }
+
+        /* Styles for the new clock in checklist header */
+        .checklist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            height: 4rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .checklist-clock-container {
+            display: flex;
+            align-items: center;
+            color: #be185d;
+            font-weight: 600;
+            font-size: 1.125rem;
+            z-index: 10;
+            margin-right: 0.5rem;
+        }
+        .checklist-clock-svg {
+            width: 3.5rem;
+            height: 3.5rem;
+            stroke: currentColor;
+            stroke-width: 1.5;
+            fill: none;
+            position: relative;
+            color: #be185d;
+        }
+        .checklist-clock-svg #checklist-hour-hand,
+        .checklist-clock-svg #checklist-minute-hand,
+        .checklist-clock-svg #checklist-second-hand {
+            transform-origin: 50% 50%;
+            transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.6, 1);
+        }
+        .clock-number {
+            font-family: sans-serif;
+            font-size: 8px;
+            fill: #666;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        /* New styles for special date modals */
+        .decorative-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin-bottom: 1.5rem;
+        }
+        .decorative-header h4, .decorative-header h2 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            color: #1f2937; /* Changed to black */
+            font-style: italic;
+        }
+        .decorative-header .dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: #ec4899; /* pink-500 */
+            border-radius: 50%;
+            margin: 0 1rem;
+        }
+        .decorative-header .line {
+            width: 50%;
+            height: 1px;
+            background-color: rgba(236, 72, 153, 0.4); /* pink-500 with opacity */
+            margin-top: 0.5rem;
+        }
+
+        /* --- Semester Hub Styles (Updated) --- */
+        .pink-glassmorphism {
+            background: rgba(252, 231, 243, 0.6); /* rose-50 with 60% opacity */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .sticky-note-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .sticky-note {
+            background-color: rgba(255, 255, 255, 0.7); /* White background */
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-style: normal;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .sticky-note:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .note-actions {
+            flex-shrink: 0;
+            margin-right: 0.5rem;
+        }
+        .note-action-btn {
+            background: rgba(236, 72, 153, 0.1);
+            border: 1px solid rgba(236, 72, 153, 0.2);
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .note-action-btn:hover {
+            background: rgba(236, 72, 153, 0.2);
+        }
+        .note-action-btn svg {
+            width: 1rem;
+            height: 1rem;
+        }
+        .spring-notepad {
+            background-color: #fff0f5; /* Lavender blush - a very light pink */
+            border: 1px solid #f9a8d4; /* pink-300 */
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            position: relative;
+        }
+        .spring-notepad::before {
+            content: '';
+            position: absolute;
+            top: 1rem;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-image: repeating-linear-gradient(to right, #f472b6 0, #f472b6 5px, transparent 5px, transparent 10px); /* pink-400 */
+        }
+        #stickyNoteInput {
+            background-color: rgba(255, 255, 255, 0.7);
+            color: #1f2937; /* Tailwind gray-800 */
+            font-style: normal;
+        }
+        #stickyNoteInput::placeholder {
+            color: #6b7280; /* Tailwind gray-500 */
+        }
+        
+        /* --- Timetable Styles --- */
+        .timetable-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(252, 231, 243, 0.8); /* rose-50 with opacity */
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* Pill shape */
+            margin-bottom: 0.5rem;
+            font-style: normal;
+        }
+        .class-timetable {
+            border-collapse: collapse;
+            width: 100%;
+            font-style: normal;
+        }
+        .class-timetable th, .class-timetable td {
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .class-timetable th {
+            background-color: rgba(252, 231, 243, 0.8);
+            color: #be185d;
+            font-weight: bold;
+        }
+        .class-timetable td {
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        .class-timetable .day-header {
+            color: #be185d;
+            font-weight: bold;
+        }
+        .lunch-break {
+            background-color: rgba(249, 168, 212, 0.4) !important;
+            font-style: italic;
+        }
+        .timetable-modal-input {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #f9a8d4;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-pink-200 to-rose-300 min-h-screen p-4">
+
+    <div id="hearts-container" class="hearts-container"></div>
+
+    <div id="main-menu-view">
+        <div class="w-full max-w-4xl mx-auto relative z-10 flex flex-col items-center justify-center min-h-screen">
+            
+            <header class="w-full flex justify-between items-center my-12 px-9">
+                <div class="greeting-container">
+                    <h1 id="greeting" class="text-4xl md:text-5xl text-slate-800 font-light whitespace-nowrap"></h1>
+                </div>
+
+                <div class="flex flex-col gap-4 items-end">
+                    <button id="profileButton" class="bg-white/70 p-2 rounded-full shadow-md hover:bg-white transition-transform transform hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-rose-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div id="morning-notification" class="main-notification hidden p-4 rounded-2xl flex-col items-center text-center">
+                        <p id="morning-notification-text" class="text-base font-semibold mb-3"></p>
+                        <button id="close-morning-notification" class="bg-rose-600 text-white text-sm font-bold py-1 px-4 rounded-full hover:bg-rose-700 transition-colors">
+                            Okay
+                        </button>
+                    </div>
+                    <div id="evening-notification" class="main-notification hidden p-4 rounded-2xl flex-col items-center text-center">
+                        <p id="evening-notification-text" class="text-base font-semibold mb-3"></p>
+                        <button id="close-evening-notification" class="bg-rose-600 text-white text-sm font-bold py-1 px-4 rounded-full hover:bg-rose-700 transition-colors">
+                            Okay
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
+                <div id="daily-checklist-card" class="main-menu-card glassmorphism p-6 rounded-2xl text-center cursor-pointer">
+                    <div class="flex justify-center mb-4">
+                        <svg class="w-16 h-16 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-slate-700">Daily Checklist</h2>
+                    <p class="text-slate-600 mt-2">Seize the day, one task at a time.</p>
+                </div>
+                <div id="journal-card" class="main-menu-card glassmorphism p-6 rounded-2xl text-center cursor-pointer">
+                    <div class="flex justify-center mb-4">
+                            <svg class="w-16 h-16 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-slate-700">My Journal</h2>
+                    <p class="text-slate-600 mt-2">Reflect, unwind, and capture your thoughts.</p>
+                </div>
+                <div id="semester-hub-card" class="main-menu-card glassmorphism p-6 rounded-2xl text-center cursor-pointer">
+                    <div class="flex justify-center mb-4">
+                        <svg class="w-16 h-16 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-slate-700">Semester Hub</h2>
+                    <p class="text-slate-600 mt-2">Focus your academic ambitions.</p>
+                </div>
+                <div onclick="window.location.href='importantnotes.html'" class="main-menu-card glassmorphism p-6 rounded-2xl text-center cursor-pointer">
+                    <div class="flex justify-center mb-4">
+                        <svg class="w-16 h-16 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-slate-700">Important Notes</h2>
+                    <p class="text-slate-600 mt-2">Jot down quick reminders.</p>
+                </div>
+                <div onclick="window.location.href='longtermgoals.html'" class="main-menu-card glassmorphism p-6 rounded-2xl text-center cursor-pointer lg:col-span-2">
+                    <div class="flex justify-center mb-4">
+                        <svg class="w-16 h-16 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" /></svg>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-slate-700">Long Term Goals</h2>
+                    <p class="text-slate-600 mt-2">Dream big and map your future vision.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="journal-view" class="hidden">
+        <div class="container mx-auto p-4 max-w-7xl">
+            <header class="flex justify-between items-center mb-4 h-16">
+                <div class="date-container">
+                    <h1 id="dateDisplay" class="text-xl md:text-2xl text-black font-lora-italic px-4"></h1>
+                </div>
+                <button id="pastEntriesButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Past Entries
+                </button>
+            </header>
+            <main class="writing-container glassmorphism rounded-2xl shadow-lg overflow-hidden">
+                <textarea id="journalEntry" class="w-full h-full p-6 md:p-8 diary-entry text-xl text-black italic writing-area focus:outline-none" placeholder="Start writing here..."></textarea>
+            </main>
+            <div class="flex justify-between items-center p-4">
+                <div class="flex items-center space-x-2 text-gray-700">
+                    <div class="w-8 h-8">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="48" stroke="currentColor" stroke-width="4" fill="rgba(255,255,255,0.5)" />
+                            <rect id="hour-hand" x="48.5" y="25" width="3" height="25" rx="2.5" ry="2.5" fill="currentColor" />
+                            <rect id="minute-hand" x="49" y="15" width="2" height="35" rx="2" ry="2" fill="currentColor" />
+                            <line id="second-hand" x1="50" y1="50" x2="50" y2="18" stroke="#ec4899" stroke-width="2" />
+                            <circle cx="50" cy="50" r="3" fill="#ec4899" />
+                        </svg>
+                    </div>
+                    <p id="timeDisplay" class="text-lg"></p>
+                </div>
+                <button id="saveButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Save Entry
+                </button>
+            </div>
+            <div class="text-center">
+                <button id="journal-back-to-main" class="text-pink-600 hover:text-pink-800 font-bold transition-colors">
+                    &larr; Back to Main Menu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pastEntriesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-4xl w-full relative">
+            <button id="closePastEntriesModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="w-2 h-2 bg-pink-800 rounded-full"></div>
+                    <h3 class="font-playfair text-2xl text-black italic">Past Entries</h3>
+                    <div class="w-2 h-2 bg-pink-800 rounded-full"></div>
+                </div>
+                <p class="text-sm text-pink-800 mb-4">A collection of your beautiful thoughts.</p>
+            </div>
+            <div id="pastEntriesList" class="space-y-3 overflow-y-auto max-h-96"></div>
+        </div>
+    </div>
+    <div id="viewEntryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-8 max-w-5xl w-full relative flex flex-col">
+             <button id="closeViewEntryModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <p id="modalDay" class="absolute top-4 left-4 bg-pink-200/80 text-pink-800 text-sm font-semibold px-3 py-1 rounded-full"></p>
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="w-2 h-2 bg-pink-800 rounded-full"></div>
+                    <h4 id="modalDate" class="font-playfair text-3xl text-black italic"></h4>
+                    <div class="w-2 h-2 bg-pink-800 rounded-full"></div>
+                </div>
+                <div class="w-1/2 mx-auto h-px bg-pink-800/30 my-2"></div>
+            </div>
+            <div id="modalContent" class="entry-paper"></div>
+            <p id="modalTime" class="text-right text-sm text-pink-900 mt-4"></p>
+            
+            <div id="viewModeButtons" class="flex justify-end space-x-2 mt-4">
+                <button id="editEntryButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-3 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center space-x-1 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                    <span>Edit</span>
+                </button>
+                <button id="deleteEntryButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-3 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center space-x-1 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165M12 2.25V5.25" />
+                    </svg>
+                    <span>Delete</span>
+                </button>
+            </div>
+
+            <div id="editModeButtons" class="flex justify-end space-x-2 mt-4 hidden">
+                <button id="saveEditedEntryButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-3 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center space-x-1 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span>Save Changes</span>
+                </button>
+                <button id="cancelEditButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-3 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center space-x-1 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span>Cancel Edit</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-sm w-full text-center">
+            <h3 id="confirmationTitle" class="font-playfair text-xl text-black italic mb-4">Confirm Deletion</h3>
+            <p id="confirmationMessage" class="text-gray-700 mb-6">Are you sure you want to delete this entry? This action cannot be undone.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirmDeleteButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Yes, Delete
+                </button>
+                <button id="cancelDeleteButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="daily-checklist-view" class="hidden">
+        <div class="container mx-auto p-4 max-w-7xl">
+            <header class="checklist-header">
+                <h1 class="text-xl md:text-2xl font-lora-italic px-4 text-black">Daily & Weekly Checklist</h1>
+                
+                <div class="flex space-x-2 items-center"> <div class="checklist-clock-container">
+                        <svg id="checklistClockSvg" class="checklist-clock-svg" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="48" stroke="currentColor" stroke-width="4" fill="rgba(255,255,255,0.5)" />
+                            <rect id="checklist-hour-hand" x="48.5" y="25" width="3" height="25" rx="2.5" ry="2.5" fill="currentColor" />
+                            <rect id="checklist-minute-hand" x="49" y="15" width="2" height="35" rx="2" ry="2" fill="currentColor" />
+                            <line id="checklist-second-hand" x1="50" y1="50" x2="50" y2="18" stroke="#ec4899" stroke-width="2" />
+                            <circle cx="50" cy="50" r="3" fill="#ec4899" />
+                        </svg>
+                    </div>
+                    <button id="viewCalendarButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block mr-1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5m18 7.5v-7.5m-9 5.25h.008v.008H12v-.008zM12 15h.008v.008H12v-.008zM12 18h.008v.008H12v-.008zM6.75 15h.008v.008H6.75v-.008zM6.75 18h.008v.008H6.75v-.008zM3 12h.008v.008H3V12zm0 3h.008v.008H3v3zm3.75-3h.008v.008H6.75V12zm0 3h.008v.008H6.75v-.008zM9 12h.008v.008H9V12zm0 3h.008v.008H9v-.008zM9 18h.008v.008H9v-.008z" />
+                        </svg>
+                        Calendar
+                    </button>
+                    <button id="viewPlannedTasksButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Planned Tasks
+                    </button>
+                </div>
+            </header>
+            <main class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <section class="md:col-span-2 glassmorphism rounded-2xl shadow-lg p-6 flex flex-col">
+                    <h2 class="text-2xl font-semibold text-black mb-2 text-center">Daily Tasks</h2>
+                    <p id="dailyTasksDateDisplay" class="text-lg text-black text-center mb-4"></p> <div class="flex items-center space-x-2 mb-4">
+                        <input type="text" id="newDailyTaskInput" placeholder="Add a new daily task..." class="flex-grow p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                        <button id="addDailyTaskButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                            Add
+                        </button>
+                    </div>
+                    <div id="dailyTaskList" class="space-y-2 flex-grow overflow-y-auto">
+                    </div>
+                    <div id="dailyTasksAppreciation" class="appreciation-quote hidden">
+                        Yayyy!! You are done with the day!
+                    </div>
+                    <div class="text-center mt-4">
+                        <button id="planNextDayButton" class="text-pink-600 hover:text-pink-800 font-bold transition-colors">
+                            Plan for Next Day &rarr;
+                        </button>
+                    </div>
+                </section>
+
+                <section class="md:col-span-1 glassmorphism rounded-2xl shadow-lg p-6 flex flex-col">
+                    <h2 class="text-2xl font-semibold text-black mb-2 text-center">Weekly Tasks</h2>
+                    <p id="weeklyTasksDateRangeDisplay" class="text-lg text-black text-center mb-4"></p> <div class="flex items-center space-x-2 mb-4">
+                        <input type="text" id="newWeeklyTaskInput" placeholder="Add a weekly task..." class="flex-grow p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                        <button id="addWeeklyTaskButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                            Add
+                        </button>
+                    </div>
+
+                    <div id="weeklyTaskList" class="space-y-2 flex-grow overflow-y-auto">
+                    </div>
+                </section>
+            </main>
+            <div class="text-center mt-4">
+                <button id="checklist-back-to-main" class="text-pink-600 hover:text-pink-800 font-bold transition-colors">
+                    &larr; Back to Main Menu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="semester-hub-view" class="hidden">
+        <div class="container mx-auto p-4 max-w-7xl">
+            <header class="flex justify-between items-center mb-4 h-16">
+                <h1 class="text-2xl md:text-3xl text-black font-lora-italic">Semester Hub</h1>
+            </header>
+            
+            <section id="semester-details-section" class="glassmorphism rounded-2xl shadow-lg p-6 mb-6">
+                <div class="flex flex-col md:flex-row justify-center items-center gap-6 text-center">
+                    <div class="flex items-center space-x-2">
+                        <p id="semesterDateDisplay" class="text-xl font-bold text-pink-800"></p>
+                        <button id="openSetDatesModalButton" class="bg-pink-100 hover:bg-pink-200 text-pink-700 font-bold py-1 px-3 rounded-lg transition-colors text-sm flex-shrink-0" style="font-style: normal;">Set Dates</button>
+                    </div>
+
+                    <div class="hidden md:block w-px h-12 bg-pink-200"></div>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <label for="currentSemesterSelect" class="font-semibold text-gray-700" style="font-style: normal;">Semester:</label>
+                            <select id="currentSemesterSelect" class="p-2 rounded-lg bg-white/80 border border-pink-200 focus:ring-pink-400 focus:border-pink-400">
+                            </select>
+                        </div>
+                        <p id="academicYearDisplay" class="text-lg font-bold text-rose-800 bg-rose-200/80 px-3 py-1 rounded-full" style="font-style: normal;"></p>
+                    </div>
+                </div>
+            </section>
+
+            <main class="flex flex-col lg:flex-row gap-6">
+                <section class="w-full lg:w-3/5 pink-glassmorphism rounded-2xl shadow-lg p-6">
+                     <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-black italic text-left mb-4">Weekly Class Timetable</h2>
+                        <div id="timetable-container">
+                            <div id="set-timetable-prompt" class="text-center hidden">
+                                <p class="text-gray-700 mb-4" style="font-style: normal;">Your timetable for the current semester is not set.</p>
+                                <button id="set-timetable-btn" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-6 rounded-lg">Set Timetable</button>
+                            </div>
+                            <div id="timetable-view" class="hidden">
+                                <div id="timetable-table-container" class="overflow-x-auto">
+                                </div>
+                                <div class="text-center mt-4">
+                                    <button id="edit-timetable-btn" class="text-pink-600 hover:text-pink-800 font-bold transition-colors">Edit Timetable</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-black italic text-left mb-4">General Academic Goals</h2>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <input type="text" id="newAcademicGoalInput" placeholder="Add a new goal..." class="flex-grow p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                            <button id="addAcademicGoalButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                                Add
+                            </button>
+                        </div>
+                        <div id="academicGoalList" class="space-y-2 overflow-y-auto">
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h2 class="text-2xl font-bold text-black italic text-left mb-4">Internal Exam 1</h2>
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
+                            <input type="text" id="newExamCourseInput" placeholder="Course Name" class="flex-grow w-full sm:w-auto p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300" style="font-style: normal;">
+                            <input type="date" id="newExamDateInput" class="w-full sm:w-auto p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300" style="font-style: normal;">
+                            <button id="addExamEntryButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 w-full sm:w-auto">
+                                Add
+                            </button>
+                        </div>
+                        <div id="internalExam1Timetable" class="space-y-2 overflow-y-auto">
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h2 class="text-2xl font-bold text-black italic text-left mb-4">Internal Exam 2</h2>
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
+                            <input type="text" id="newExamCourseInput2" placeholder="Course Name" class="flex-grow w-full sm:w-auto p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300" style="font-style: normal;">
+                            <input type="date" id="newExamDateInput2" class="w-full sm:w-auto p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300" style="font-style: normal;">
+                            <button id="addExamEntryButton2" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 w-full sm:w-auto">
+                                Add
+                            </button>
+                        </div>
+                        <div id="internalExam2Timetable" class="space-y-2 overflow-y-auto">
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h2 class="text-2xl font-bold text-black italic text-left mb-4">End Semester Examination</h2>
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
+                            <input type="text" id="newEndSemCourseInput" placeholder="Course Name" class="flex-grow w-full sm:w-auto p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300" style="font-style: normal;">
+                            <input type="date" id="newEndSemDateInput" class="w-full sm:w-auto p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300" style="font-style: normal;">
+                            <button id="addEndSemEntryButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 w-full sm:w-auto">
+                                Add
+                            </button>
+                        </div>
+                        <div id="endSemTimetable" class="space-y-2 overflow-y-auto">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="w-full lg:w-2/5 pink-glassmorphism rounded-2xl shadow-lg p-6">
+                    <div class="flex justify-between items-center">
+                         <div class="decorative-header mb-4 flex-grow">
+                             <h2>
+                                 <span class="dot"></span>
+                                 <span>This Semester's Vision</span>
+                                 <span class="dot"></span>
+                             </h2>
+                             <div class="line"></div>
+                         </div>
+                        <button id="add-sticky-note-button" class="bg-pink-500 hover:bg-pink-600 text-white rounded-full w-10 h-10 flex items-center justify-center transition-transform transform hover:scale-110 flex-shrink-0 ml-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="sticky-notes-container" class="sticky-note-container">
+                    </div>
+                </section>
+            </main>
+            <div class="text-center mt-8">
+                <button id="semester-hub-back-to-main" class="text-pink-600 hover:text-pink-800 font-bold transition-colors">
+                    &larr; Back to Main Menu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="planNextDayModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-xl w-full relative flex flex-col">
+            <button id="closePlanNextDayModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="text-center mb-4">
+                <h3 class="font-playfair text-2xl text-black italic mb-2">Plan for Future Day</h3>
+                <p class="text-sm text-pink-800">Schedule tasks for upcoming days.</p>
+            </div>
+            <div class="flex items-center space-x-2 mb-4">
+                <label for="nextDayDateInput" class="text-gray-700">Date:</label>
+                <input type="date" id="nextDayDateInput" class="p-2 rounded-lg bg-white/70 text-black focus:outline-none focus:ring-2 focus:ring-pink-300">
+            </div>
+            <div class="flex items-center space-x-2 mb-4">
+                <input type="text" id="nextDayTaskInput" placeholder="Add task for selected date..." class="flex-grow p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                <button id="addNextDayTaskButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Add
+                </button>
+            </div>
+            <div id="nextDayTaskList" class="space-y-2 flex-grow overflow-y-auto max-h-60">
+            </div>
+        </div>
+    </div>
+
+    <div id="plannedTasksModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-4xl w-full relative">
+            <button id="closePlannedTasksModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="w-2 h-2 bg-pink-800 rounded-full"></div>
+                    <h3 class="font-playfair text-2xl text-black italic">Planned Tasks</h3>
+                    <div class="w-2 h-2 bg-pink-800 rounded-full"></div>
+                </div>
+                <p class="text-sm text-pink-800 mb-4">All your upcoming scheduled tasks.</p>
+            </div>
+            <div id="plannedTasksListDisplay" class="space-y-3 overflow-y-auto max-h-96"></div>
+        </div>
+    </div>
+
+    <div id="calendarModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-lg w-full relative flex flex-col">
+            <button id="closeCalendarModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="text-center mb-4">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="w-2 h-2 bg-pink-800 rounded-full"></div>
+                    <h3 class="font-playfair text-2xl text-black italic">Calendar</h3>
+                    <div class="w-2 h-2 bg-pink-800 rounded-full"></div>
+                </div>
+                <p class="text-sm text-pink-800 mb-4">Visualize your month. Click a date to name it!</p>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <button id="prevMonthButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-1 px-3 rounded-lg transition-colors text-sm" style="pointer-events: auto;">
+                    &larr; Prev
+                </button>
+                <h4 id="currentMonthYear" class="font-playfair text-xl text-black italic"></h4>
+                <button id="nextMonthButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-1 px-3 rounded-lg transition-colors text-sm" style="pointer-events: auto;">
+                    Next &rarr;
+                </button>
+            </div>
+
+            <div id="calendarGrid" class="calendar-grid">
+            </div>
+        </div>
+    </div>
+
+    <div id="weeklyTaskTypeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-sm w-full text-center">
+            <h3 class="text-xl text-black italic mb-4">How would you like to add this weekly task?</h3>
+            <div class="flex flex-col space-y-4">
+                <button id="addGeneralWeeklyTaskButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Add as General Task
+                </button>
+                <button id="planWeeklyDayTaskButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Plan for a Specific Day
+                </button>
+                <button id="cancelWeeklyTaskTypeButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="weeklyDayPlanModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-sm w-full relative flex flex-col">
+            <button id="closeWeeklyDayPlanModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 class="font-playfair text-xl text-black italic mb-4 text-center">Plan Weekly Task for Day</h3>
+            <div class="flex flex-col space-y-4">
+                <select id="weeklyDaySelect" class="p-2 rounded-lg bg-white/70 text-black focus:outline-none focus:ring-2 focus:ring-pink-300">
+                    <option value="0">Sunday</option>
+                    <option value="1">Monday</option>
+                    <option value="2">Tuesday</option>
+                    <option value="3">Wednesday</option>
+                    <option value="4">Thursday</option>
+                    <option value="5">Friday</option>
+                    <option value="6">Saturday</option>
+                </select>
+                <button id="confirmWeeklyDayTaskButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Add to Day
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="planTimeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-sm w-full relative flex flex-col">
+            <button id="closePlanTimeModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 class="font-playfair text-xl text-black italic mb-4 text-center">Plan Task Time</h3>
+            <div class="flex items-center space-x-2 mb-4">
+                <select id="taskHourInput" class="p-2 rounded-lg bg-white/70 text-black focus:outline-none focus:ring-2 focus:ring-pink-300 w-1/3">
+                </select>
+                <span class="text-lg text-black">:</span>
+                <select id="taskMinuteInput" class="p-2 rounded-lg bg-white/70 text-black focus:outline-none focus:ring-2 focus:ring-pink-300 w-1/3">
+                </select>
+                <select id="taskAmPmInput" class="p-2 rounded-lg bg-white/70 text-black focus:outline-none focus:ring-2 focus:ring-pink-300 w-1/3">
+                    <option value="am">AM</option>
+                    <option value="pm">PM</option>
+                </select>
+            </div>
+            <div class="flex justify-center space-x-2">
+                <button id="saveTaskTimeButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Save Time
+                </button>
+                <button id="clearTaskTimeButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                    Clear Time
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewSpecialDateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-md w-full text-center">
+            <button id="closeViewSpecialDateModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div id="viewSpecialDateHeader" class="decorative-header">
+            </div>
+            <p id="viewSpecialDateName" class="text-2xl text-rose-900 italic mb-6"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="editSpecialDateButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Edit
+                </button>
+                <button id="removeSpecialDateButton" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Remove
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editSpecialDateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-md w-full">
+            <button id="closeEditSpecialDateModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 id="editSpecialDateTitle" class="font-playfair text-xl text-black italic mb-2 text-center">Name this Day</h3>
+            <p id="editSpecialDateSubTitle" class="text-center text-rose-800 mb-4"></p>
+            <input type="text" id="specialDateNameInput" placeholder="e.g., Anniversary" class="w-full p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-400 mb-4">
+            <div class="flex justify-end space-x-2">
+                <button id="saveSpecialDateButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Save
+                </button>
+                <button id="cancelEditSpecialDateButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="stickyNoteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-0 overflow-hidden w-full max-w-lg">
+            <div class="spring-notepad">
+                <h3 id="stickyNoteTitle" class="font-playfair text-xl text-rose-800 italic mb-4 text-center">New Note</h3>
+                <textarea id="stickyNoteInput" class="w-full h-48 p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none" placeholder="Jot something down..."></textarea>
+                
+                <div class="mt-4">
+                    <h4 class="font-playfair text-lg text-rose-800 italic text-center">Text Color</h4>
+                    <div class="flex justify-center items-center space-x-6 mt-2">
+                        <label class="flex items-center cursor-pointer p-2 rounded-lg hover:bg-pink-100/50">
+                            <input type="radio" name="noteColor" value="pink" class="h-4 w-4 text-pink-600 border-gray-300 focus:ring-pink-500" checked>
+                            <span class="ml-2 text-pink-700 font-bold" style="font-style: normal;">Bold Pink</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer p-2 rounded-lg hover:bg-gray-100/50">
+                            <input type="radio" name="noteColor" value="black" class="h-4 w-4 text-gray-800 border-gray-300 focus:ring-gray-700">
+                            <span class="ml-2 text-gray-800 font-bold" style="font-style: normal;">Bold Black</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button id="saveStickyNoteButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Save Note
+                    </button>
+                    <button id="cancelStickyNoteButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="setSemesterDatesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-sm w-full text-center">
+            <h3 class="font-playfair text-xl text-black italic mb-4">Set Semester Dates</h3>
+            <div class="flex flex-col space-y-4">
+                <div>
+                    <label for="modalSemesterStartDate" class="font-semibold text-gray-700" style="font-style: normal;">Start Date:</label>
+                    <input type="date" id="modalSemesterStartDate" class="p-2 rounded-lg bg-white/80 border border-pink-200 focus:ring-pink-400 focus:border-pink-400 w-full">
+                </div>
+                <div>
+                    <label for="modalSemesterEndDate" class="font-semibold text-gray-700" style="font-style: normal;">End Date:</label>
+                    <input type="date" id="modalSemesterEndDate" class="p-2 rounded-lg bg-white/80 border border-pink-200 focus:ring-pink-400 focus:border-pink-400 w-full">
+                </div>
+                <div class="flex justify-center space-x-4 mt-4">
+                    <button id="saveModalSemesterDatesButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Save
+                    </button>
+                    <button id="cancelSetDatesButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="timetableModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-4xl w-full">
+            <h3 class="font-playfair text-2xl text-black italic mb-4 text-center">Set Your Weekly Timetable</h3>
+            <div id="timetable-input-container" class="overflow-x-auto">
+            </div>
+             <div class="flex justify-end space-x-4 mt-6">
+                <button id="saveTimetableButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg">Save</button>
+                <button id="cancelTimetableButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="infoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-sm w-full text-center">
+            <h3 id="infoTitle" class="font-playfair text-xl text-black italic mb-4"></h3>
+            <p id="infoMessage" class="text-gray-700 mb-6" style="font-style: normal;"></p>
+            <button id="infoOkButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+        </div>
+    </div>
+
+    <div id="namePromptModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-glassmorphism rounded-2xl p-8 max-w-md w-full text-center">
+            <h3 class="font-playfair text-2xl text-black italic mb-2">Welcome to AuraFlow!</h3>
+            <p class="text-rose-800 mb-6">What should we call you?</p>
+            <input type="text" id="userNameInput" placeholder="Enter your name..." class="w-full p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-400 mb-6 text-center">
+            <button id="saveNameButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105 w-full">
+                Let's Go!
+            </button>
+        </div>
+    </div>
+
+    <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-md w-full">
+            <button id="closeProfileModalButton" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="decorative-header">
+                <h2>
+                    <span class="dot"></span>
+                    <span>Your Profile</span>
+                    <span class="dot"></span>
+                </h2>
+                <div class="line"></div>
+            </div>
+            <label for="editNameInput" class="font-semibold text-rose-900 block mb-2 text-center" style="font-style: normal;">Your Name</label>
+            <input type="text" id="editNameInput" class="w-full p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-400 mb-4 text-center">
+            <div class="flex justify-end space-x-2">
+                <button id="saveProfileButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Save
+                </button>
+                <button id="cancelProfileButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editTaskModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-glassmorphism rounded-2xl p-6 max-w-md w-full">
+            <h3 class="font-playfair text-xl text-black italic mb-4 text-center">Edit Item</h3>
+            <input type="text" id="editTaskInput" class="w-full p-3 rounded-lg bg-white/70 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-400 mb-4" style="font-style: normal;">
+            <div class="flex justify-end space-x-2">
+                <button id="saveEditedTaskButton" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Save Changes
+                </button>
+                <button id="cancelEditTaskButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Global State ---
+            let currentlyEditingDate = null;
+            let currentlyEditingTask = { id: null, storageKey: null, text: null, date: null, course: null };
+
+
+            // --- DOM Element References ---
+            const mainMenuView = document.getElementById('main-menu-view');
+
+            // Notification Elements
+            const morningNotification = document.getElementById('morning-notification');
+            const morningNotificationText = document.getElementById('morning-notification-text');
+            const closeMorningNotificationButton = document.getElementById('close-morning-notification');
+            const eveningNotification = document.getElementById('evening-notification');
+            const eveningNotificationText = document.getElementById('evening-notification-text');
+            const closeEveningNotificationButton = document.getElementById('close-evening-notification');
+
+            // Journal View Elements
+            const journalView = document.getElementById('journal-view');
+            const journalCard = document.getElementById('journal-card');
+            const journalBackToMainButton = document.getElementById('journal-back-to-main');
+            
+            const dateDisplayElement = document.getElementById('dateDisplay');
+            const timeDisplayElement = document.getElementById('timeDisplay');
+            const journalEntryElement = document.getElementById('journalEntry');
+            const saveButton = document.getElementById('saveButton');
+            
+            const pastEntriesButton = document.getElementById('pastEntriesButton');
+            const pastEntriesModal = document.getElementById('pastEntriesModal');
+            const closePastEntriesModalButton = document.getElementById('closePastEntriesModalButton');
+            const pastEntriesList = document.getElementById('pastEntriesList');
+
+            const viewEntryModal = document.getElementById('viewEntryModal');
+            const closeViewEntryModalButton = document.getElementById('closeViewEntryModalButton');
+            const modalDay = document.getElementById('modalDay');
+            const modalDate = document.getElementById('modalDate');
+            const modalTime = document.getElementById('modalTime');
+            const modalContent = document.getElementById('modalContent');
+            const deleteEntryButton = document.getElementById('deleteEntryButton'); 
+            const editEntryButton = document.getElementById('editEntryButton');
+            const viewModeButtons = document.getElementById('viewModeButtons');
+            const editModeButtons = document.getElementById('editModeButtons');
+            const saveEditedEntryButton = document.getElementById('saveEditedEntryButton');
+            const cancelEditButton = document.getElementById('cancelEditButton');
+
+            // Confirmation Modal Elements
+            const confirmationModal = document.getElementById('confirmationModal');
+            const confirmationTitle = document.getElementById('confirmationTitle');
+            const confirmationMessage = document.getElementById('confirmationMessage');
+            const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+            const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+            let actionTypeToConfirm = null;
+            let itemIdToConfirm = null;
+
+            // Info Modal Elements
+            const infoModal = document.getElementById('infoModal');
+            const infoTitle = document.getElementById('infoTitle');
+            const infoMessage = document.getElementById('infoMessage');
+            const infoOkButton = document.getElementById('infoOkButton');
+
+            // Daily Checklist View Elements
+            const dailyChecklistView = document.getElementById('daily-checklist-view');
+            const dailyChecklistCard = document.getElementById('daily-checklist-card');
+            const checklistBackToMainButton = document.getElementById('checklist-back-to-main');
+            
+            const dailyTasksDateDisplay = document.getElementById('dailyTasksDateDisplay');
+            const newDailyTaskInput = document.getElementById('newDailyTaskInput'); 
+            const addDailyTaskButton = document.getElementById('addDailyTaskButton'); 
+            const dailyTaskList = document.getElementById('dailyTaskList'); 
+            const dailyTasksAppreciation = document.getElementById('dailyTasksAppreciation');
+
+            const newWeeklyTaskInput = document.getElementById('newWeeklyTaskInput'); 
+            const addWeeklyTaskButton = document.getElementById('addWeeklyTaskButton'); 
+            const weeklyTaskList = document.getElementById('weeklyTaskList'); 
+            const weeklyTasksDateRangeDisplay = document.getElementById('weeklyTasksDateRangeDisplay');
+            
+            // Weekly Task Type Selection Modal Elements
+            const weeklyTaskTypeModal = document.getElementById('weeklyTaskTypeModal');
+            const addGeneralWeeklyTaskButton = document.getElementById('addGeneralWeeklyTaskButton');
+            const planWeeklyDayTaskButton = document.getElementById('planWeeklyDayTaskButton');
+            const cancelWeeklyTaskTypeButton = document.getElementById('cancelWeeklyTaskTypeButton');
+            let currentWeeklyTaskText = '';
+
+            // Weekly Day Planning Modal Elements
+            const weeklyDayPlanModal = document.getElementById('weeklyDayPlanModal');
+            const closeWeeklyDayPlanModalButton = document.getElementById('closeWeeklyDayPlanModalButton');
+            const weeklyDaySelect = document.getElementById('weeklyDaySelect');
+            const confirmWeeklyDayTaskButton = document.getElementById('confirmWeeklyDayTaskButton');
+
+
+            const viewCalendarButton = document.getElementById('viewCalendarButton'); 
+            const viewPlannedTasksButton = document.getElementById('viewPlannedTasksButton'); 
+            
+            // Plan for Next Day Modal Elements
+            const planNextDayButton = document.getElementById('planNextDayButton');
+            const planNextDayModal = document.getElementById('planNextDayModal');
+            const closePlanNextDayModalButton = document.getElementById('closePlanNextDayModalButton');
+            const nextDayDateInput = document.getElementById('nextDayDateInput');
+            const nextDayTaskInput = document.getElementById('nextDayTaskInput');
+            const addNextDayTaskButton = document.getElementById('addNextDayTaskButton');
+            const nextDayTaskList = document.getElementById('nextDayTaskList');
+
+            // Planned Tasks Modal Elements
+            const plannedTasksModal = document.getElementById('plannedTasksModal'); 
+            const closePlannedTasksModalButton = document.getElementById('closePlannedTasksModalButton'); 
+            const plannedTasksListDisplay = document.getElementById('plannedTasksListDisplay'); 
+
+            // Calendar Modal Elements
+            const calendarModal = document.getElementById('calendarModal');
+            const closeCalendarModalButton = document.getElementById('closeCalendarModalButton');
+            const prevMonthButton = document.getElementById('prevMonthButton');
+            const nextMonthButton = document.getElementById('nextMonthButton');
+            const currentMonthYear = document.getElementById('currentMonthYear');
+            const calendarGrid = document.getElementById('calendarGrid');
+
+            let currentCalendarDate = new Date();
+
+            // Plan Time Modal Elements
+            const planTimeModal = document.getElementById('planTimeModal');
+            const closePlanTimeModalButton = document.getElementById('closePlanTimeModalButton');
+            const taskHourInput = document.getElementById('taskHourInput');
+            const taskMinuteInput = document.getElementById('taskMinuteInput');
+            const taskAmPmInput = document.getElementById('taskAmPmInput');
+            const saveTaskTimeButton = document.getElementById('saveTaskTimeButton');
+            const clearTaskTimeButton = document.getElementById('clearTaskTimeButton');
+            let currentTaskToPlanTimeId = null;
+            let currentTaskToPlanTimeStorageKey = null;
+
+            // Checklist Clock Elements
+            const checklistClockSvg = document.getElementById('checklistClockSvg');
+            const checklistClockContainer = document.querySelector('.checklist-clock-container');
+            const checklistHourHand = document.getElementById('checklist-hour-hand');
+            const checklistMinuteHand = document.getElementById('checklist-minute-hand');
+            const checklistSecondHand = document.getElementById('checklist-second-hand');
+
+            // Special Date Modal Elements
+            const viewSpecialDateModal = document.getElementById('viewSpecialDateModal');
+            const closeViewSpecialDateModalButton = document.getElementById('closeViewSpecialDateModalButton');
+            const viewSpecialDateHeader = document.getElementById('viewSpecialDateHeader');
+            const viewSpecialDateName = document.getElementById('viewSpecialDateName');
+            const editSpecialDateButton = document.getElementById('editSpecialDateButton');
+            const removeSpecialDateButton = document.getElementById('removeSpecialDateButton');
+
+            const editSpecialDateModal = document.getElementById('editSpecialDateModal');
+            const closeEditSpecialDateModalButton = document.getElementById('closeEditSpecialDateModalButton');
+            const editSpecialDateTitle = document.getElementById('editSpecialDateTitle');
+            const editSpecialDateSubTitle = document.getElementById('editSpecialDateSubTitle');
+            const specialDateNameInput = document.getElementById('specialDateNameInput');
+            let isEditingSpecialDate = false;
+            
+            // Semester Hub Elements
+            const semesterHubView = document.getElementById('semester-hub-view');
+            const semesterHubCard = document.getElementById('semester-hub-card');
+            const semesterHubBackToMainButton = document.getElementById('semester-hub-back-to-main');
+            const addStickyNoteButton = document.getElementById('add-sticky-note-button');
+            const stickyNotesContainer = document.getElementById('sticky-notes-container');
+            const stickyNoteModal = document.getElementById('stickyNoteModal');
+            const stickyNoteTitle = document.getElementById('stickyNoteTitle');
+            const stickyNoteInput = document.getElementById('stickyNoteInput');
+            const saveStickyNoteButton = document.getElementById('saveStickyNoteButton');
+            const cancelStickyNoteButton = document.getElementById('cancelStickyNoteButton');
+            let currentNoteId = null; 
+
+            const newAcademicGoalInput = document.getElementById('newAcademicGoalInput');
+            const addAcademicGoalButton = document.getElementById('addAcademicGoalButton');
+            const academicGoalList = document.getElementById('academicGoalList');
+            
+            const openSetDatesModalButton = document.getElementById('openSetDatesModalButton');
+            const setSemesterDatesModal = document.getElementById('setSemesterDatesModal');
+            const modalSemesterStartDate = document.getElementById('modalSemesterStartDate');
+            const modalSemesterEndDate = document.getElementById('modalSemesterEndDate');
+            const saveModalSemesterDatesButton = document.getElementById('saveModalSemesterDatesButton');
+            const cancelSetDatesButton = document.getElementById('cancelSetDatesButton');
+            const semesterDateDisplay = document.getElementById('semesterDateDisplay');
+            const currentSemesterSelect = document.getElementById('currentSemesterSelect');
+            const academicYearDisplay = document.getElementById('academicYearDisplay');
+
+            // Exam Timetable 1 Elements
+            const newExamCourseInput = document.getElementById('newExamCourseInput');
+            const newExamDateInput = document.getElementById('newExamDateInput');
+            const addExamEntryButton = document.getElementById('addExamEntryButton');
+            const internalExam1Timetable = document.getElementById('internalExam1Timetable');
+
+            // Exam Timetable 2 Elements
+            const newExamCourseInput2 = document.getElementById('newExamCourseInput2');
+            const newExamDateInput2 = document.getElementById('newExamDateInput2');
+            const addExamEntryButton2 = document.getElementById('addExamEntryButton2');
+            const internalExam2Timetable = document.getElementById('internalExam2Timetable');
+
+            // End Sem Timetable Elements
+            const newEndSemCourseInput = document.getElementById('newEndSemCourseInput');
+            const newEndSemDateInput = document.getElementById('newEndSemDateInput');
+            const addEndSemEntryButton = document.getElementById('addEndSemEntryButton');
+            const endSemTimetable = document.getElementById('endSemTimetable');
+
+            // Weekly Timetable Elements
+            const timetableContainer = document.getElementById('timetable-container');
+            const setTimetablePrompt = document.getElementById('set-timetable-prompt');
+            const setTimetableBtn = document.getElementById('set-timetable-btn');
+            const timetableModal = document.getElementById('timetableModal');
+            const timetableInputContainer = document.getElementById('timetable-input-container');
+            const saveTimetableButton = document.getElementById('saveTimetableButton');
+            const cancelTimetableButton = document.getElementById('cancelTimetableButton');
+            const timetableTableView = document.getElementById('timetable-view');
+            const timetableTableContainer = document.getElementById('timetable-table-container');
+            const editTimetableBtn = document.getElementById('edit-timetable-btn');
+
+
+            const greetingElement = document.getElementById('greeting');
+            const heartsContainer = document.getElementById('hearts-container');
+
+            // NEW: User Profile & Name Prompt Elements
+            const namePromptModal = document.getElementById('namePromptModal');
+            const userNameInput = document.getElementById('userNameInput');
+            const saveNameButton = document.getElementById('saveNameButton');
+            const profileButton = document.getElementById('profileButton');
+            const profileModal = document.getElementById('profileModal');
+            const closeProfileModalButton = document.getElementById('closeProfileModalButton');
+            const editNameInput = document.getElementById('editNameInput');
+            const saveProfileButton = document.getElementById('saveProfileButton');
+            const cancelProfileButton = document.getElementById('cancelProfileButton');
+
+            // NEW: Task Edit Modal Elements
+            const editTaskModal = document.getElementById('editTaskModal');
+            const editTaskInput = document.getElementById('editTaskInput');
+            const saveEditedTaskButton = document.getElementById('saveEditedTaskButton');
+            const cancelEditTaskButton = document.getElementById('cancelEditTaskButton');
+
+            // --- Time Input Generation ---
+            function populateTimeSelectors() {
+                for (let i = 1; i <= 12; i++) {
+                    const option = document.createElement('option');
+                    option.value = String(i).padStart(2, '0');
+                    option.textContent = String(i);
+                    taskHourInput.appendChild(option);
+                }
+
+                for (let i = 0; i < 60; i += 5) {
+                    const option = document.createElement('option');
+                    option.value = String(i).padStart(2, '0');
+                    option.textContent = String(i).padStart(2, '0');
+                    taskMinuteInput.appendChild(option);
+                }
+            };
+
+            // --- Clock Number Generation ---
+            function addClockNumbers(svgElement) {
+                const radius = 40;
+                const centerX = 50;
+                const centerY = 50;
+
+                Array.from(svgElement.querySelectorAll('.clock-number')).forEach(num => num.remove());
+
+                for (let i = 1; i <= 12; i++) {
+                    const angle = (i * 30 - 90) * Math.PI / 180; 
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
+
+                    const textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    textElement.setAttribute("x", x);
+                    textElement.setAttribute("y", y);
+                    textElement.setAttribute("class", "clock-number");
+                    textElement.textContent = i;
+                    svgElement.appendChild(textElement);
+                }
+            };
+            
+            // --- View Switching Logic ---
+            function showView(viewToShow) {
+                const allViews = [mainMenuView, journalView, dailyChecklistView, semesterHubView];
+                allViews.forEach(view => view.classList.add('hidden'));
+                
+                viewToShow.classList.remove('hidden');
+
+                if (viewToShow === journalView) {
+                    loadPastEntries();
+                } else if (viewToShow === dailyChecklistView) {
+                    updateDailyTasksDateTime();
+                    updateWeeklyTasksDateRange();
+                    transferFutureTasksToDaily();
+                    loadDailyTasks();
+                    loadWeeklyTasks();
+                    updateChecklistClock();
+                } else if (viewToShow === semesterHubView) {
+                    loadSemesterDetails();
+                    loadSemesterNotes();
+                    loadAcademicGoals();
+                    renderExamTimetable('auraFlowInternalExam1', internalExam1Timetable);
+                    renderExamTimetable('auraFlowInternalExam2', internalExam2Timetable);
+                    renderExamTimetable('auraFlowEndSemExams', endSemTimetable);
+                    loadWeeklyClassTimetable();
+                }
+            };
+
+            // --- Event Listeners for Main Menu Cards ---
+            journalCard.addEventListener('click', () => showView(journalView));
+            dailyChecklistCard.addEventListener('click', () => showView(dailyChecklistView));
+            semesterHubCard.addEventListener('click', () => showView(semesterHubView));
+
+            // --- Back to Main Menu Buttons ---
+            journalBackToMainButton.addEventListener('click', () => showView(mainMenuView));
+            checklistBackToMainButton.addEventListener('click', () => showView(mainMenuView));
+            semesterHubBackToMainButton.addEventListener('click', () => showView(mainMenuView));
+
+
+            // --- Local Storage Logic ---
+            function getEntries(key) {
+                const items = localStorage.getItem(key);
+                return items ? JSON.parse(items) : [];
+            };
+
+            function saveEntries(key, items) {
+                localStorage.setItem(key, JSON.stringify(items));
+            };
+            
+            // --- Journal Functions ---
+            function saveJournalEntry() {
+                const content = journalEntryElement.value.trim();
+                if (content === '') {
+                    showInfoModal('Empty Entry', 'Journal entry cannot be empty.');
+                    return;
+                }
+                
+                const originalButtonText = saveButton.textContent;
+                saveButton.textContent = 'Saving...';
+                saveButton.disabled = true;
+
+                setTimeout(() => {
+                    const entries = getEntries('auraFlowJournalEntries');
+                    const newEntry = {
+                        id: Date.now(),
+                        createdAt: new Date().toISOString(),
+                        content: content
+                    };
+                    entries.unshift(newEntry);
+                    saveEntries('auraFlowJournalEntries', entries);
+                    
+                    journalEntryElement.value = '';
+                    loadPastEntries();
+
+                    saveButton.textContent = originalButtonText;
+                    saveButton.disabled = false;
+                }, 1000);
+            };
+
+            function loadPastEntries() {
+                const entries = getEntries('auraFlowJournalEntries');
+                pastEntriesList.innerHTML = ''; 
+                if (entries.length === 0) {
+                    pastEntriesList.innerHTML = '<p class="text-gray-600">No entries yet. Write your first one!</p>';
+                    return;
+                }
+                
+                entries.forEach((entry, index) => {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'past-entry-item p-3 rounded-lg cursor-pointer text-rose-700 font-bold';
+                    entryDiv.textContent = formatDateOnly(new Date(entry.createdAt));
+                    entryDiv.dataset.id = entry.id;
+                    entryDiv.style.animationDelay = `${index * 0.1}s`;
+                    entryDiv.addEventListener('click', () => viewEntry(entry.id));
+                    pastEntriesList.appendChild(entryDiv);
+                });
+            };
+
+            function viewEntry(entryId) {
+                const entries = getEntries('auraFlowJournalEntries');
+                const entry = entries.find(e => e.id == entryId);
+                if (entry) {
+                    const entryDate = new Date(entry.createdAt);
+                    
+                    viewEntryModal.dataset.entryId = entry.id;
+                    viewEntryModal.dataset.originalContent = entry.content;
+                    
+                    closeModal(pastEntriesModal, () => {
+                        modalDay.textContent = formatDayOnly(entryDate);
+                        modalDate.textContent = formatDateOnly(entryDate);
+                        modalTime.textContent = `Saved at: ${formatTimeOnly(entryDate)}`;
+                        modalContent.textContent = entry.content;
+                        modalContent.contentEditable = 'false';
+                        modalContent.classList.remove('editing');
+                        viewModeButtons.classList.remove('hidden');
+                        editModeButtons.classList.add('hidden');
+                        openModal(viewEntryModal);
+                    });
+                }
+            };
+
+            function editJournalEntry() {
+                modalContent.contentEditable = 'true';
+                modalContent.focus();
+                modalContent.classList.add('editing');
+                viewModeButtons.classList.add('hidden');
+                editModeButtons.classList.remove('hidden');
+            };
+
+            function saveEditedJournalEntry() {
+                const editedContent = modalContent.textContent.trim();
+                const entryId = viewEntryModal.dataset.entryId;
+
+                if (editedContent === '') {
+                    showInfoModal('Empty Entry', 'Entry content cannot be empty.');
+                    cancelEditJournalEntry();
+                    return;
+                }
+
+                let entries = getEntries('auraFlowJournalEntries');
+                entries = entries.map(entry => 
+                    entry.id == entryId ? { ...entry, content: editedContent } : entry
+                );
+                saveEntries('auraFlowJournalEntries', entries);
+                
+                modalContent.contentEditable = 'false';
+                modalContent.classList.remove('editing');
+                viewModeButtons.classList.remove('hidden');
+                editModeButtons.classList.add('hidden');
+                loadPastEntries();
+            };
+
+            function cancelEditJournalEntry() {
+                modalContent.textContent = viewEntryModal.dataset.originalContent;
+                modalContent.contentEditable = 'false';
+                modalContent.classList.remove('editing');
+                viewModeButtons.classList.remove('hidden');
+                editModeButtons.classList.add('hidden');
+            };
+
+            function openDeleteConfirmation(type, id, message) {
+                confirmationTitle.textContent = `Confirm ${type} Deletion`;
+                confirmationMessage.textContent = message;
+                actionTypeToConfirm = type;
+                itemIdToConfirm = id;
+                openModal(confirmationModal);
+            };
+
+            function deleteJournalEntryConfirmed(entryId) {
+                let entries = getEntries('auraFlowJournalEntries');
+                entries = entries.filter(entry => entry.id != entryId);
+                saveEntries('auraFlowJournalEntries', entries);
+                
+                closeModal(confirmationModal, () => {
+                    closeModal(viewEntryModal, () => {
+                        loadPastEntries();
+                        openModal(pastEntriesModal);
+                    });
+                });
+            };
+
+            // --- Daily Checklist Functions ---
+            function formatTimeForDisplay(time24hr) {
+                if (!time24hr) return '';
+                const [hours, minutes] = time24hr.split(':');
+                let h = parseInt(hours);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12;
+                h = h ? h : 12;
+                const strTime = `${h}:${minutes} ${ampm}`; 
+                return strTime;
+            };
+
+            function renderTasks(targetElement, tasksToRender, storageKey) {
+                const fragment = document.createDocumentFragment();
+
+                tasksToRender.forEach(task => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = `task-item ${task.completed ? 'completed' : ''}`;
+                    taskDiv.dataset.id = task.id;
+                    taskDiv.dataset.storageKey = storageKey;
+
+                    taskDiv.innerHTML = `
+                        <label class="flex items-center flex-grow cursor-pointer">
+                            <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                            <span class="ml-2 text-lg text-black">
+                                ${task.plannedTime ? `<span class="task-time">${formatTimeForDisplay(task.plannedTime)} : </span>` : ''}
+                                ${task.text}
+                            </span>
+                        </label>
+                        <div class="flex items-center space-x-2">
+                            ${(storageKey === 'auraFlowDailyTasks' || storageKey === 'auraFlowFutureTasks') ? `
+                                <button class="plan-time-btn" data-task-id="${task.id}" data-storage-key="${storageKey}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                </button>
+                            ` : ''}
+                            <button class="edit-task-btn p-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                            </button>
+                            <button class="delete-task-btn p-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165M12 2.25V5.25" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    fragment.appendChild(taskDiv);
+
+                    taskDiv.querySelector('.task-checkbox').addEventListener('change', (e) => toggleTaskCompletion(e, storageKey));
+                    taskDiv.querySelector('.delete-task-btn').addEventListener('click', (e) => deleteTask(e, storageKey));
+                    taskDiv.querySelector('.edit-task-btn').addEventListener('click', (e) => {
+                        const taskId = e.currentTarget.closest('.task-item').dataset.id;
+                        const tasks = getEntries(storageKey);
+                        const taskToEdit = tasks.find(t => t.id == taskId);
+                        if (taskToEdit) {
+                            openEditTaskModal(taskId, storageKey, taskToEdit.text);
+                        }
+                    });
+                    
+                    if (storageKey === 'auraFlowDailyTasks' || storageKey === 'auraFlowFutureTasks') {
+                        const planTimeButton = taskDiv.querySelector('.plan-time-btn');
+                        if (planTimeButton) {
+                            planTimeButton.addEventListener('click', (e) => openPlanTimeModal(e.currentTarget.dataset.taskId, e.currentTarget.dataset.storageKey));
+                        }
+                    }
+                });
+                targetElement.appendChild(fragment);
+            };
+
+            function addDailyTask() {
+                const taskText = newDailyTaskInput.value.trim();
+                if (taskText === '') {
+                    showInfoModal('Empty Task', 'Daily task cannot be empty.');
+                    return;
+                }
+                const tasks = getEntries('auraFlowDailyTasks');
+                const newTask = { id: Date.now(), text: taskText, completed: false, plannedTime: null };
+                tasks.push(newTask);
+                saveEntries('auraFlowDailyTasks', tasks);
+                newDailyTaskInput.value = '';
+                loadDailyTasks();
+            };
+
+            function loadDailyTasks() {
+                let tasks = getEntries('auraFlowDailyTasks');
+                
+                tasks.sort((a, b) => {
+                    if (a.plannedTime && b.plannedTime) {
+                        return a.plannedTime.localeCompare(b.plannedTime);
+                    }
+                    if (a.plannedTime) return -1;
+                    if (b.plannedTime) return 1;
+                    return 0;
+                });
+
+                dailyTaskList.innerHTML = '';
+                renderTasks(dailyTaskList, tasks, 'auraFlowDailyTasks');
+
+                const allTasksCompleted = tasks.length > 0 && tasks.every(task => task.completed);
+                if (allTasksCompleted) {
+                    dailyTasksAppreciation.classList.remove('hidden');
+                } else {
+                    dailyTasksAppreciation.classList.add('hidden');
+                }
+            };
+
+            function handleAddWeeklyTaskClick() {
+                const taskText = newWeeklyTaskInput.value.trim();
+                if (taskText === '') {
+                    showInfoModal('Empty Task', 'Weekly task cannot be empty.');
+                    return;
+                }
+                currentWeeklyTaskText = taskText; 
+                openModal(weeklyTaskTypeModal);
+            };
+
+            function addWeeklyGeneralTask() {
+                if (currentWeeklyTaskText === '') {
+                    closeModal(weeklyTaskTypeModal);
+                    return;
+                }
+                const tasks = getEntries('auraFlowWeeklyTasks');
+                const newTask = { id: Date.now(), text: currentWeeklyTaskText, completed: false, type: 'general' };
+                tasks.push(newTask);
+                saveEntries('auraFlowWeeklyTasks', tasks);
+                newWeeklyTaskInput.value = '';
+                currentWeeklyTaskText = '';
+                closeModal(weeklyTaskTypeModal);
+                loadWeeklyTasks();
+            };
+
+            function addWeeklyDaySpecificTaskConfirmed() {
+                if (currentWeeklyTaskText === '') {
+                    closeModal(weeklyDayPlanModal);
+                    return;
+                }
+                const dayOfWeek = parseInt(weeklyDaySelect.value);
+                const tasks = getEntries('auraFlowWeeklyTasks');
+                const newTask = { id: Date.now(), text: currentWeeklyTaskText, completed: false, dayOfWeek: dayOfWeek, type: 'day-specific' };
+                tasks.push(newTask);
+                saveEntries('auraFlowWeeklyTasks', tasks);
+                newWeeklyTaskInput.value = '';
+                currentWeeklyTaskText = '';
+                closeModal(weeklyDayPlanModal, () => {
+                    loadWeeklyTasks();
+                });
+            };
+
+
+            function loadWeeklyTasks() {
+                const tasks = getEntries('auraFlowWeeklyTasks');
+                weeklyTaskList.innerHTML = '';
+
+                const generalTasks = tasks.filter(task => task.type === 'general');
+                const daySpecificTasks = tasks.filter(task => task.type === 'day-specific');
+
+                const generalHeading = document.createElement('h4');
+                generalHeading.className = 'font-semibold text-black text-lg mt-4 mb-2 border-b border-pink-300 pb-1';
+                generalHeading.textContent = 'General Weekly Tasks';
+                weeklyTaskList.appendChild(generalHeading);
+                if (generalTasks.length > 0) {
+                    renderTasks(weeklyTaskList, generalTasks, 'auraFlowWeeklyTasks');
+                } else {
+                    const noGeneralTasks = document.createElement('p');
+                    noGeneralTasks.className = 'text-gray-600 pl-4';
+                    noGeneralTasks.textContent = 'No general weekly tasks. Add some!';
+                    weeklyTaskList.appendChild(noGeneralTasks);
+                }
+
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const today = new Date();
+                const currentDayOfWeek = today.getDay();
+
+                days.forEach((dayName, index) => {
+                    const tasksForDay = daySpecificTasks.filter(task => task.dayOfWeek === index);
+                    if (tasksForDay.length > 0) {
+                        const dayHeading = document.createElement('h4');
+                        dayHeading.className = 'font-semibold text-black text-lg mt-4 mb-2 border-b border-pink-300 pb-1'; 
+                        
+                        const dateForThisDay = new Date(today);
+                        dateForThisDay.setDate(today.getDate() + (index - currentDayOfWeek));
+
+                        const dayNum = dateForThisDay.getDate().toString().padStart(2, '0');
+                        const monthNum = (dateForThisDay.getMonth() + 1).toString().padStart(2, '0');
+                        const fullYear = dateForThisDay.getFullYear();
+
+                        dayHeading.textContent = `${dayNum}/${monthNum}/${fullYear} - ${dayName}`;
+                        weeklyTaskList.appendChild(dayHeading);
+                        renderTasks(weeklyTaskList, tasksForDay, 'auraFlowWeeklyTasks');
+                    }
+                });
+            };
+
+
+            function addNextDayTask() {
+                const selectedDate = nextDayDateInput.value.trim();
+                const taskText = nextDayTaskInput.value.trim();
+
+                if (!selectedDate || !taskText) {
+                    showInfoModal('Missing Info', 'Date and task cannot be empty.');
+                    return;
+                }
+
+                const tasks = getEntries('auraFlowFutureTasks');
+                const newTask = { id: Date.now(), date: selectedDate, text: taskText, completed: false, plannedTime: null };
+                tasks.push(newTask);
+                saveEntries('auraFlowFutureTasks', tasks);
+                nextDayTaskInput.value = '';
+                loadNextDayTasks(selectedDate);
+            };
+
+            function loadNextDayTasks(date) {
+                let tasks = getEntries('auraFlowFutureTasks');
+                tasks = tasks.filter(task => task.date === date);
+
+                tasks.sort((a, b) => {
+                    if (a.plannedTime && b.plannedTime) {
+                        return a.plannedTime.localeCompare(b.plannedTime);
+                    }
+                    if (a.plannedTime) return -1;
+                    if (b.plannedTime) return 1;
+                    return 0;
+                });
+
+                nextDayTaskList.innerHTML = '';
+                renderTasks(nextDayTaskList, tasks, 'auraFlowFutureTasks');
+            };
+
+            function loadPlannedTasksDisplay() {
+                const tasks = getEntries('auraFlowFutureTasks');
+                plannedTasksListDisplay.innerHTML = '';
+
+                if (tasks.length === 0) {
+                    plannedTasksListDisplay.innerHTML = '<p class="text-gray-600">No tasks planned yet. Use "Plan for Next Day" to add some!</p>';
+                    return;
+                }
+
+                const tasksByDate = tasks.reduce((acc, task) => {
+                    const dateKey = task.date;
+                    if (!acc[dateKey]) {
+                        acc[dateKey] = [];
+                    }
+                    acc[dateKey].push(task);
+                    return acc;
+                }, {});
+
+                const sortedDates = Object.keys(tasksByDate).sort((a, b) => new Date(a) - new Date(b));
+
+                sortedDates.forEach(dateKey => {
+                    // THIS IS THE FIX: Using T12:00:00 avoids timezone shifts
+                    const dateObj = new Date(dateKey + 'T12:00:00'); 
+                    const dateHeadingContainer = document.createElement('div');
+                    dateHeadingContainer.className = 'flex items-center justify-between font-semibold text-black text-lg mt-4 mb-2 border-b border-pink-300 pb-1';
+                    
+                    const dateSpan = document.createElement('span');
+                    dateSpan.textContent = formatDateOnly(dateObj);
+                    dateHeadingContainer.appendChild(dateSpan);
+
+                    const daySpan = document.createElement('span');
+                    daySpan.textContent = formatDayOnly(dateObj);
+                    daySpan.className = 'text-black text-base';
+                    dateHeadingContainer.appendChild(daySpan);
+
+                    plannedTasksListDisplay.appendChild(dateHeadingContainer);
+
+                    tasksByDate[dateKey].sort((a, b) => {
+                        if (a.plannedTime && b.plannedTime) {
+                            return a.plannedTime.localeCompare(b.plannedTime);
+                        }
+                        if (a.plannedTime) return -1;
+                        if (b.plannedTime) return 1;
+                        return 0;
+                    });
+
+                    tasksByDate[dateKey].forEach(task => {
+                        const taskDiv = document.createElement('div');
+                        taskDiv.className = `task-item ${task.completed ? 'completed' : ''}`;
+                        taskDiv.dataset.id = task.id;
+                        taskDiv.dataset.storageKey = 'auraFlowFutureTasks';
+
+                        taskDiv.innerHTML = `
+                            <label class="flex items-center flex-grow cursor-pointer">
+                                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                                <span class="ml-2 text-lg text-black">
+                                    ${task.plannedTime ? `<span class="task-time">${formatTimeForDisplay(task.plannedTime)} : </span>` : ''}
+                                    ${task.text}
+                                </span>
+                            </label>
+                            <button class="delete-task-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165M12 2.25V5.25" />
+                                </svg>
+                            </button>
+                        `;
+                        plannedTasksListDisplay.appendChild(taskDiv);
+                        taskDiv.querySelector('.task-checkbox').addEventListener('change', (e) => toggleTaskCompletion(e, 'auraFlowFutureTasks'));
+                        taskDiv.querySelector('.delete-task-btn').addEventListener('click', (e) => deleteTask(e, 'auraFlowFutureTasks'));
+                    });
+                });
+            };
+
+            function transferFutureTasksToDaily() {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const todayISO = `${year}-${month}-${day}`;
+
+                let futureTasks = getEntries('auraFlowFutureTasks');
+                let dailyTasks = getEntries('auraFlowDailyTasks');
+                let tasksTransferred = false;
+
+                const remainingFutureTasks = [];
+                futureTasks.forEach(task => {
+                    // Compare date strings directly for robustness
+                    if (task.date === todayISO && !task.completed) {
+                        const isAlreadyDaily = dailyTasks.some(dailyTask => dailyTask.id === task.id || dailyTask.text === task.text);
+                        if (!isAlreadyDaily) {
+                            dailyTasks.push({ id: task.id, text: task.text, completed: false, plannedTime: task.plannedTime || null });
+                            tasksTransferred = true;
+                        }
+                    } else {
+                        remainingFutureTasks.push(task);
+                    }
+                });
+
+                if (tasksTransferred) {
+                    saveEntries('auraFlowDailyTasks', dailyTasks);
+                    saveEntries('auraFlowFutureTasks', remainingFutureTasks);
+                    console.log('Transferred future tasks to daily.');
+                }
+            };
+
+
+            function toggleTaskCompletion(event, storageKey) {
+                const taskId = event.target.closest('.task-item').dataset.id;
+                let tasks = getEntries(storageKey);
+                tasks = tasks.map(task => 
+                    task.id == taskId ? { ...task, completed: !task.completed } : task
+                );
+                saveEntries(storageKey, tasks);
+                
+                if (storageKey === 'auraFlowDailyTasks') loadDailyTasks();
+                else if (storageKey === 'auraFlowWeeklyTasks') loadWeeklyTasks();
+                else if (storageKey === 'auraFlowFutureTasks') {
+                    if (planNextDayModal.classList.contains('flex')) {
+                        loadNextDayTasks(nextDayDateInput.value);
+                    }
+                    if (plannedTasksModal.classList.contains('flex')) {
+                        loadPlannedTasksDisplay();
+                    }
+                    if (calendarModal.classList.contains('flex')) {
+                            renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+                    }
+                } else if (storageKey === 'auraFlowAcademicGoals') {
+                    loadAcademicGoals();
+                }
+            };
+
+            function deleteTask(event, storageKey) {
+                const taskId = event.target.closest('.task-item').dataset.id;
+                let tasks = getEntries(storageKey);
+                tasks = tasks.filter(task => task.id != taskId);
+                saveEntries(storageKey, tasks);
+
+                if (storageKey === 'auraFlowDailyTasks') loadDailyTasks();
+                else if (storageKey === 'auraFlowWeeklyTasks') loadWeeklyTasks();
+                else if (storageKey === 'auraFlowFutureTasks') {
+                    if (planNextDayModal.classList.contains('flex')) {
+                        loadNextDayTasks(nextDayDateInput.value);
+                    }
+                    if (plannedTasksModal.classList.contains('flex')) {
+                        loadPlannedTasksDisplay();
+                    }
+                    if (calendarModal.classList.contains('flex')) {
+                            renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+                    }
+                } else if (storageKey === 'auraFlowAcademicGoals') {
+                    loadAcademicGoals();
+                }
+            };
+
+            // --- UI and Animations ---
+            function updateDateTime() {
+                const now = new Date();
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                
+                dateDisplayElement.textContent = now.toLocaleDateString('en-US', dateOptions);
+                timeDisplayElement.textContent = now.toLocaleTimeString('en-US', timeOptions);
+
+                const hourHand = document.getElementById('hour-hand');
+                const minuteHand = document.getElementById('minute-hand');
+                const secondHand = document.getElementById('second-hand');
+
+                if (hourHand && minuteHand && secondHand) {
+                    const seconds = now.getSeconds();
+                    const minutes = now.getMinutes();
+                    const hours = now.getHours();
+                    const secondsRatio = seconds / 60;
+                    const minutesRatio = (secondsRatio + minutes) / 60;
+                    const hoursRatio = (minutesRatio + hours % 12) / 12;
+                    secondHand.style.transform = `rotate(${secondsRatio * 360}deg)`;
+                    minuteHand.style.transform = `rotate(${minutesRatio * 360}deg)`;
+                    hourHand.style.transform = `rotate(${hoursRatio * 360}deg)`;
+                }
+            };
+
+            function updateDailyTasksDateTime() {
+                const now = new Date();
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                dailyTasksDateDisplay.textContent = now.toLocaleDateString('en-US', dateOptions);
+            };
+            
+            function updateWeeklyTasksDateRange() {
+                const today = new Date();
+                const dayOfWeek = today.getDay();
+
+                const sunday = new Date(today);
+                sunday.setDate(today.getDate() - dayOfWeek);
+
+                const saturday = new Date(today);
+                saturday.setDate(today.getDate() + (6 - dayOfWeek));
+
+                const monthOptions = { month: 'long', day: 'numeric' };
+                const sundayFormatted = sunday.toLocaleDateString('en-US', monthOptions);
+                const saturdayFormatted = saturday.toLocaleDateString('en-US', monthOptions);
+
+                weeklyTasksDateRangeDisplay.textContent = `${sundayFormatted} to ${saturdayFormatted}`;
+            };
+
+            function formatDateOnly(date) {
+                const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+                return date.toLocaleDateString('en-US', options);
+            };
+
+            function formatDayOnly(date) {
+                const options = { weekday: 'long', timeZone: 'UTC' };
+                return date.toLocaleDateString('en-US', options);
+            };
+
+            function formatTimeOnly(date) {
+                const options = { hour: '2-digit', minute: '2-digit' };
+                return date.toLocaleTimeString('en-US', options);
+            };
+
+            function openModal(modalElement) { 
+                modalElement.classList.remove('hidden');
+                // Use a short timeout to allow the display property to apply before starting the transition
+                setTimeout(() => {
+                    modalElement.classList.add('flex', 'modal-open'); 
+                }, 10);
+            };
+            function closeModal(modalElement, callback = null) { 
+                modalElement.classList.remove('modal-open');
+                setTimeout(() => {
+                    modalElement.classList.add('hidden');
+                    modalElement.classList.remove('flex');
+                    if (callback) callback();
+                }, 300);
+            };
+
+            function showInfoModal(title, message) {
+                infoTitle.textContent = title;
+                infoMessage.textContent = message;
+                openModal(infoModal);
+            }
+
+            // --- Special Date Functions ---
+            function getSpecialDates() {
+                const dates = localStorage.getItem('auraFlowSpecialDates');
+                return dates ? JSON.parse(dates) : {};
+            };
+
+            function saveSpecialDates(dates) {
+                localStorage.setItem('auraFlowSpecialDates', JSON.stringify(dates));
+            };
+
+            function handleCalendarDayClick(event) {
+                const dayDiv = event.target.closest('.calendar-day');
+                if (!dayDiv || !dayDiv.dataset.date) return;
+
+                const dateStr = dayDiv.dataset.date;
+                const specialDates = getSpecialDates();
+                const specialName = specialDates[dateStr];
+
+                if (specialName) {
+                    openViewSpecialDateModal(dateStr, specialName);
+                } else {
+                    openEditSpecialDateModal(dateStr);
+                }
+            };
+
+            function openViewSpecialDateModal(dateStr, name) {
+                const dateObj = new Date(dateStr + 'T12:00:00'); // Use noon to avoid timezone shifts
+                
+                viewSpecialDateHeader.innerHTML = `
+                    <h4>
+                        <span class="dot"></span>
+                        <span id="viewSpecialDateDate">${formatDateOnly(dateObj)}</span>
+                        <span class="dot"></span>
+                    </h4>
+                    <div class="line"></div>
+                `;
+                viewSpecialDateName.textContent = `"${name}"`;
+                viewSpecialDateModal.dataset.date = dateStr;
+                openModal(viewSpecialDateModal);
+            };
+
+            function openEditSpecialDateModal(dateStr, isEditing = false) {
+                const dateObj = new Date(dateStr + 'T12:00:00'); // Use noon to avoid timezone shifts
+                const specialDates = getSpecialDates();
+                
+                currentlyEditingDate = dateStr; // Store the date being edited
+                editSpecialDateSubTitle.textContent = formatDateOnly(dateObj);
+                isEditingSpecialDate = isEditing;
+
+                if (isEditing) {
+                    editSpecialDateTitle.textContent = "Edit Special Day's Name";
+                    specialDateNameInput.value = specialDates[dateStr] || '';
+                } else {
+                    editSpecialDateTitle.textContent = "Name this Special Day";
+                    specialDateNameInput.value = '';
+                }
+                
+                openModal(editSpecialDateModal);
+            };
+
+            function saveSpecialDate() {
+                const dateStr = currentlyEditingDate; // Use the stored date
+                const name = specialDateNameInput.value.trim();
+
+                if (!dateStr) {
+                    console.error("No date was set for saving.");
+                    return;
+                }
+
+                if (!name) {
+                    showInfoModal('Empty Name', 'The special name cannot be empty.');
+                    return;
+                }
+
+                const specialDates = getSpecialDates();
+                specialDates[dateStr] = name;
+                saveSpecialDates(specialDates);
+
+                closeModal(editSpecialDateModal, () => {
+                    renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+                    currentlyEditingDate = null; // Reset after use
+                });
+            };
+
+            function removeSpecialDateConfirmed(dateStr) {
+                const specialDates = getSpecialDates();
+                delete specialDates[dateStr];
+                saveSpecialDates(specialDates);
+
+                closeModal(confirmationModal, () => {
+                    closeModal(viewSpecialDateModal, () => {
+                        renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+                    });
+                });
+            };
+
+            // --- Calendar Functions ---
+            function renderCalendar(year, month) {
+                currentMonthYear.textContent = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                calendarGrid.innerHTML = `
+                    <div class="day-name">Sun</div>
+                    <div class="day-name">Mon</div>
+                    <div class="day-name">Tue</div>
+                    <div class="day-name">Wed</div>
+                    <div class="day-name">Thu</div>
+                    <div class="day-name">Fri</div>
+                    <div class="day-name">Sat</div>
+                `;
+
+                const firstDayOfMonth = new Date(year, month, 1);
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDayOfWeek = firstDayOfMonth.getDay();
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const futureTasks = getEntries('auraFlowFutureTasks');
+                const dailyTasks = getEntries('auraFlowDailyTasks');
+                const specialDates = getSpecialDates();
+
+                const datesWithTasks = new Set();
+                futureTasks.forEach(task => {
+                    if (!task.completed) {
+                        datesWithTasks.add(task.date);
+                    }
+                });
+                
+                const todayYear = today.getFullYear();
+                const todayMonth = String(today.getMonth() + 1).padStart(2, '0');
+                const todayDay = String(today.getDate()).padStart(2, '0');
+                const todayFormatted = `${todayYear}-${todayMonth}-${todayDay}`;
+
+                if (dailyTasks.some(task => !task.completed)) {
+                    datesWithTasks.add(todayFormatted);
+                }
+
+
+                for (let i = 0; i < firstDayOfWeek; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'calendar-day empty';
+                    calendarGrid.appendChild(emptyDay);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    
+                    const dateYear = date.getFullYear();
+                    const dateMonth = String(date.getMonth() + 1).padStart(2, '0');
+                    const dateDay = String(date.getDate()).padStart(2, '0');
+                    const dateFormatted = `${dateYear}-${dateMonth}-${dateDay}`;
+
+                    const dayDiv = document.createElement('div');
+                    dayDiv.textContent = day;
+                    dayDiv.classList.add('calendar-day');
+                    dayDiv.dataset.date = dateFormatted; // Add data-date attribute
+
+                    dayDiv.classList.add('current-month');
+                    
+                    if (dateFormatted === todayFormatted) {
+                        dayDiv.classList.add('today');
+                    }
+
+                    if (datesWithTasks.has(dateFormatted)) {
+                        dayDiv.classList.add('has-tasks');
+                    }
+
+                    if (specialDates[dateFormatted]) {
+                        dayDiv.classList.add('special-date');
+                    }
+
+                    calendarGrid.appendChild(dayDiv);
+                }
+            };
+
+            function navigateMonth(direction) {
+                if (direction === 'prev') {
+                    currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+                } else {
+                    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+                }
+                renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+            };
+
+            // --- Plan Time Modal Functions ---
+            function openPlanTimeModal(taskId, storageKey) {
+                currentTaskToPlanTimeId = taskId;
+                currentTaskToPlanTimeStorageKey = storageKey;
+                const tasks = getEntries(storageKey);
+                const task = tasks.find(t => t.id == taskId);
+
+                taskHourInput.value = '12';
+                taskMinuteInput.value = '00';
+                taskAmPmInput.value = 'pm';
+
+                if (task && task.plannedTime) {
+                    const [hours24, minutes] = task.plannedTime.split(':');
+                    let h = parseInt(hours24);
+                    let ampm = 'am';
+
+                    if (h === 0) {
+                        h = 12;
+                        ampm = 'am';
+                    } else if (h === 12) {
+                        h = 12;
+                        ampm = 'pm';
+                    } else if (h > 12) {
+                        h = h - 12;
+                        ampm = 'pm';
+                    }
+                    
+                    taskHourInput.value = String(h).padStart(2, '0');
+                    taskMinuteInput.value = minutes;
+                    taskAmPmInput.value = ampm;
+                }
+                openModal(planTimeModal);
+            };
+
+            function savePlannedTime() {
+                if (!currentTaskToPlanTimeId || !currentTaskToPlanTimeStorageKey) return;
+
+                const selectedHour12 = parseInt(taskHourInput.value);
+                const selectedMinute = taskMinuteInput.value;
+                const selectedAmPm = taskAmPmInput.value;
+
+                let hours24 = selectedHour12;
+                if (selectedAmPm === 'pm' && selectedHour12 !== 12) {
+                    hours24 += 12;
+                } else if (selectedAmPm === 'am' && selectedHour12 === 12) {
+                    hours24 = 0;
+                }
+                
+                const newTime = `${String(hours24).padStart(2, '0')}:${selectedMinute}`;
+
+                let tasks = getEntries(currentTaskToPlanTimeStorageKey);
+                tasks = tasks.map(task => 
+                    task.id == currentTaskToPlanTimeId ? { ...task, plannedTime: newTime } : task
+                );
+                saveEntries(currentTaskToPlanTimeStorageKey, tasks);
+                closeModal(planTimeModal);
+                
+                if (currentTaskToPlanTimeStorageKey === 'auraFlowDailyTasks') {
+                    loadDailyTasks();
+                } else if (currentTaskToPlanTimeStorageKey === 'auraFlowFutureTasks') {
+                    const task = tasks.find(t => t.id == currentTaskToPlanTimeId);
+                    if (task && task.date) {
+                        loadNextDayTasks(task.date);
+                    } else {
+                        loadPlannedTasksDisplay();
+                    }
+                }
+                currentTaskToPlanTimeId = null;
+                currentTaskToPlanTimeStorageKey = null;
+            };
+
+            function clearPlannedTime() {
+                if (!currentTaskToPlanTimeId || !currentTaskToPlanTimeStorageKey) return;
+
+                let tasks = getEntries(currentTaskToPlanTimeStorageKey);
+                tasks = tasks.map(task => 
+                    task.id == currentTaskToPlanTimeId ? { ...task, plannedTime: null } : task
+                );
+                saveEntries(currentTaskToPlanTimeStorageKey, tasks);
+                closeModal(planTimeModal);
+                
+                if (currentTaskToPlanTimeStorageKey === 'auraFlowDailyTasks') {
+                    loadDailyTasks();
+                } else if (currentTaskToPlanTimeStorageKey === 'auraFlowFutureTasks') {
+                    const task = tasks.find(t => t.id == currentTaskToPlanTimeId);
+                    if (task && task.date) {
+                        loadNextDayTasks(task.date);
+                    } else {
+                        loadPlannedTasksDisplay();
+                    }
+                }
+                currentTaskToPlanTimeId = null;
+                currentTaskToPlanTimeStorageKey = null;
+            };
+
+            // --- Checklist Clock Functions ---
+            function updateChecklistClock() {
+                const now = new Date();
+                
+                const seconds = now.getSeconds();
+                const minutes = now.getMinutes();
+                const hours = now.getHours();
+
+                const secondsRatio = seconds / 60;
+                const minutesRatio = (secondsRatio + minutes) / 60;
+                const hoursRatio = (minutesRatio + hours % 12) / 12;
+
+                if (checklistHourHand && checklistMinuteHand && checklistSecondHand) {
+                    checklistSecondHand.style.transform = `rotate(${secondsRatio * 360}deg)`;
+                    checklistMinuteHand.style.transform = `rotate(${minutesRatio * 360}deg)`;
+                    checklistHourHand.style.transform = `rotate(${hoursRatio * 360}deg)`;
+                }
+            };
+
+            // --- Notification and Daily Reset Functions ---
+            function getTodayDateString() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            function dailyReset() {
+                const today = getTodayDateString();
+                const lastVisit = localStorage.getItem('auraFlowLastVisit');
+
+                if (lastVisit !== today) {
+                    console.log('New day detected. Resetting daily tasks.');
+                    localStorage.removeItem('auraFlowDailyTasks');
+                    localStorage.setItem('auraFlowLastVisit', today);
+                }
+            };
+
+            function weeklyReset() {
+                const today = new Date();
+                const dayOfWeek = today.getDay(); // Sunday is 0, Saturday is 6
+                
+                // Calculate the date of the most recent Sunday
+                const lastSunday = new Date(today);
+                lastSunday.setDate(today.getDate() - dayOfWeek);
+                const lastSundayStr = lastSunday.toISOString().split('T')[0];
+
+                const lastWeeklyReset = localStorage.getItem('auraFlowLastWeeklyReset');
+
+                if (lastWeeklyReset !== lastSundayStr) {
+                    console.log('New week detected. Resetting weekly tasks.');
+                    localStorage.removeItem('auraFlowWeeklyTasks');
+                    localStorage.setItem('auraFlowLastWeeklyReset', lastSundayStr);
+                }
+            }
+
+
+            function showMorningNotification() {
+                const now = new Date();
+                const currentHour = now.getHours();
+                const today = getTodayDateString();
+                const notifKey = `auraFlowTaskNotifShownFor_${today}`;
+                const notifShown = localStorage.getItem(notifKey);
+
+                if (currentHour >= 6 && currentHour < 12 && !notifShown) { 
+                    morningNotificationText.innerHTML = "Good morning! Time to plan and review your daily tasks. ☀️";
+                    morningNotification.classList.remove('hidden');
+                    localStorage.setItem(notifKey, 'true');
+                }
+            };
+
+            function showEveningNotification() {
+                const now = new Date();
+                const currentHour = now.getHours();
+                const today = getTodayDateString();
+                const notifKey = `auraFlowJournalNotifShownFor_${today}`;
+                const notifShown = localStorage.getItem(notifKey);
+
+                if (currentHour >= 22 && !notifShown) { // 10 PM (22:00) or later
+                    eveningNotificationText.innerHTML = "The day is ending... time to reflect in your journal. 🌙";
+                    eveningNotification.classList.remove('hidden');
+                    localStorage.setItem(notifKey, 'true');
+                }
+            };
+            
+            // --- Semester Hub Functions (Updated) ---
+            function addAcademicGoal() {
+                const taskText = newAcademicGoalInput.value.trim();
+                if (taskText === '') {
+                    showInfoModal('Empty Goal', 'Goal cannot be empty.');
+                    return;
+                }
+                const tasks = getEntries('auraFlowAcademicGoals');
+                const newTask = { id: Date.now(), text: taskText, completed: false };
+                tasks.push(newTask);
+                saveEntries('auraFlowAcademicGoals', tasks);
+                newAcademicGoalInput.value = '';
+                loadAcademicGoals();
+            };
+
+            function loadAcademicGoals() {
+                const tasks = getEntries('auraFlowAcademicGoals');
+                academicGoalList.innerHTML = '';
+                renderTasks(academicGoalList, tasks, 'auraFlowAcademicGoals');
+            };
+
+            function loadSemesterNotes() {
+                const notes = getEntries('auraFlowSemesterNotes');
+                stickyNotesContainer.innerHTML = '';
+                notes.forEach(note => {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.className = 'sticky-note';
+                    
+                    const contentWrapper = document.createElement('div');
+                    contentWrapper.className = 'flex flex-wrap justify-between items-end';
+
+                    const textElement = document.createElement('p');
+                    textElement.className = 'note-content mr-2 flex-grow font-bold';
+                    textElement.textContent = note.content;
+
+                    if (note.color === 'black') {
+                        textElement.style.color = '#1f2937';
+                    } else {
+                        textElement.style.color = '#be185d';
+                    }
+
+                    contentWrapper.appendChild(textElement);
+
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'note-actions inline-flex self-end gap-2 ml-auto';
+                    actionsDiv.innerHTML = `
+                        <button class="note-action-btn edit-note-btn" data-id="${note.id}" title="Edit Note">
+                            <svg class="text-pink-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 7.125 13.5 13.125" />
+                            </svg>
+                        </button>
+                        <button class="note-action-btn delete-note-btn" data-id="${note.id}" title="Delete Note">
+                            <svg class="text-rose-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165M12 2.25V5.25" />
+                            </svg>
+                        </button>
+                    `;
+                    contentWrapper.appendChild(actionsDiv);
+                    noteDiv.appendChild(contentWrapper);
+                    stickyNotesContainer.appendChild(noteDiv);
+                });
+            };
+
+            function handleSaveSemesterNote() {
+                const content = stickyNoteInput.value.trim();
+                if (content === '') {
+                    showInfoModal('Empty Note', 'Note content cannot be empty.');
+                    return;
+                }
+
+                const selectedColor = document.querySelector('input[name="noteColor"]:checked').value;
+                let notes = getEntries('auraFlowSemesterNotes');
+
+                if (currentNoteId) { // We are editing an existing note
+                    notes = notes.map(note => 
+                        note.id == currentNoteId ? { ...note, content: content, color: selectedColor } : note
+                    );
+                } else { // We are creating a new note
+                    const newNote = {
+                        id: Date.now(),
+                        content: content,
+                        color: selectedColor
+                    };
+                    notes.push(newNote);
+                }
+                
+                saveEntries('auraFlowSemesterNotes', notes);
+                closeModal(stickyNoteModal);
+                loadSemesterNotes();
+                currentNoteId = null; 
+            }
+
+            function deleteSemesterNoteConfirmed(noteId) {
+                let notes = getEntries('auraFlowSemesterNotes');
+                notes = notes.filter(note => note.id != noteId);
+                saveEntries('auraFlowSemesterNotes', notes);
+
+                closeModal(confirmationModal, () => {
+                    loadSemesterNotes();
+                });
+            }
+
+            function saveSemesterDates() {
+                const startDate = modalSemesterStartDate.value;
+                const endDate = modalSemesterEndDate.value;
+                if (startDate && endDate) {
+                    localStorage.setItem('auraFlowSemesterStartDate', startDate);
+                    localStorage.setItem('auraFlowSemesterEndDate', endDate);
+                    displaySemesterDates();
+                    closeModal(setSemesterDatesModal);
+                    // After saving new dates, check timetable
+                    loadWeeklyClassTimetable();
+                } else {
+                    showInfoModal('Missing Dates', 'Please select both a start and end date.');
+                }
+            }
+
+            function displaySemesterDates() {
+                const startDateStr = localStorage.getItem('auraFlowSemesterStartDate');
+                const endDateStr = localStorage.getItem('auraFlowSemesterEndDate');
+
+                if (startDateStr && endDateStr) {
+                    const startDate = new Date(startDateStr + 'T00:00:00');
+                    const endDate = new Date(endDateStr + 'T00:00:00');
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    semesterDateDisplay.textContent = `${startDate.toLocaleDateString('en-US', options)} - ${endDate.toLocaleDateString('en-US', options)}`;
+                } else {
+                    semesterDateDisplay.textContent = 'Set your semester dates';
+                }
+            }
+
+            function saveCurrentSemester() {
+                const semester = currentSemesterSelect.value;
+                localStorage.setItem('auraFlowCurrentSemester', semester);
+                calculateAndDisplayYear(semester);
+            }
+
+            function calculateAndDisplayYear(semester) {
+                if(semester) {
+                    const year = Math.ceil(parseInt(semester) / 2);
+                    let yearText = '';
+                    switch(year) {
+                        case 1: yearText = '1st Year'; break;
+                        case 2: yearText = '2nd Year'; break;
+                        case 3: yearText = '3rd Year'; break;
+                        case 4: yearText = '4th Year'; break;
+                        case 5: yearText = '5th Year'; break;
+                        default: yearText = 'Year';
+                    }
+                    academicYearDisplay.textContent = yearText;
+                } else {
+                    academicYearDisplay.textContent = '';
+                }
+            }
+
+            function loadSemesterDetails() {
+                // Populate semester dropdown
+                currentSemesterSelect.innerHTML = '';
+                for (let i = 1; i <= 10; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `${i}`;
+                    currentSemesterSelect.appendChild(option);
+                }
+
+                const savedStartDate = localStorage.getItem('auraFlowSemesterStartDate');
+                const savedEndDate = localStorage.getItem('auraFlowSemesterEndDate');
+                const savedSemester = localStorage.getItem('auraFlowCurrentSemester');
+
+                if (savedStartDate) modalSemesterStartDate.value = savedStartDate;
+                if (savedEndDate) modalSemesterEndDate.value = savedEndDate;
+                if (savedSemester) currentSemesterSelect.value = savedSemester;
+
+                displaySemesterDates();
+                calculateAndDisplayYear(savedSemester);
+            }
+
+            // --- Generic Exam Timetable Functions ---
+            function addExamEntry(storageKey, courseInput, dateInput, listElement) {
+                const course = courseInput.value.trim();
+                const date = dateInput.value;
+                if (!course || !date) {
+                    showInfoModal('Missing Info', 'Course name and date are required.');
+                    return;
+                }
+                const timetable = getEntries(storageKey);
+                const newEntry = { id: Date.now(), course, date };
+                timetable.push(newEntry);
+                saveEntries(storageKey, timetable);
+                courseInput.value = '';
+                dateInput.value = '';
+                renderExamTimetable(storageKey, listElement);
+            }
+
+            function deleteExamEntry(e, storageKey, listElement) {
+                const entryId = e.target.closest('.timetable-item').dataset.id;
+                let timetable = getEntries(storageKey);
+                timetable = timetable.filter(entry => entry.id != entryId);
+                saveEntries(storageKey, timetable);
+                renderExamTimetable(storageKey, listElement);
+            }
+
+            function renderExamTimetable(storageKey, listElement) {
+                const timetable = getEntries(storageKey);
+                listElement.innerHTML = '';
+
+                timetable.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                timetable.forEach(entry => {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'timetable-item';
+                    entryDiv.dataset.id = entry.id;
+
+                    const dateObj = new Date(entry.date + 'T00:00:00');
+                    const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+                    entryDiv.innerHTML = `
+                        <span class="text-black text-sm font-semibold">
+                            <strong class="text-pink-700">${formattedDate}</strong> - ${entry.course}
+                        </span>
+                        <div class="flex items-center space-x-2">
+                           <button class="edit-task-btn edit-exam-btn p-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                            </button>
+                            <button class="delete-task-btn delete-exam-btn p-1" data-storage-key="${storageKey}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.925a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165M12 2.25V5.25" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    listElement.appendChild(entryDiv);
+                    entryDiv.querySelector('.edit-exam-btn').addEventListener('click', (e) => {
+                        const entryId = e.currentTarget.closest('.timetable-item').dataset.id;
+                        const entries = getEntries(storageKey);
+                        const entryToEdit = entries.find(item => item.id == entryId);
+                        if(entryToEdit) {
+                           openEditTaskModal(entryId, storageKey, entryToEdit.course, entryToEdit.date);
+                        }
+                    });
+                });
+            }
+            
+            // --- Weekly Class Timetable Functions ---
+            const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            const timeSlots = ["8:00 - 10:00", "10:00 - 12:00", "12:00 - 1:00", "1:00 - 3:00", "3:00 - 5:00"];
+
+            function getTimetableStorageKey() {
+                const startDate = localStorage.getItem('auraFlowSemesterStartDate');
+                const endDate = localStorage.getItem('auraFlowSemesterEndDate');
+                if (startDate && endDate) {
+                    return `auraFlowTimetable_${startDate}_${endDate}`;
+                }
+                return null;
+            }
+
+            function loadWeeklyClassTimetable() {
+                const storageKey = getTimetableStorageKey();
+                if (!storageKey) {
+                    setTimetablePrompt.classList.remove('hidden');
+                    timetableTableView.classList.add('hidden');
+                    return;
+                }
+
+                const timetableData = getEntries(storageKey);
+
+                if (timetableData.length === 0) {
+                    setTimetablePrompt.classList.remove('hidden');
+                    timetableTableView.classList.add('hidden');
+                } else {
+                    renderTimetable(timetableData);
+                    setTimetablePrompt.classList.add('hidden');
+                    timetableTableView.classList.remove('hidden');
+                }
+            }
+
+            function renderTimetable(data) {
+                const table = document.createElement('table');
+                table.className = 'class-timetable';
+
+                // Header Row
+                const thead = table.createTHead();
+                const headerRow = thead.insertRow();
+                const timeHeaders = ["Day", "8:00 - 10:00", "10:00 - 12:00", "12:00 - 1:00", "1:00 - 3:00", "3:00 - 5:00"];
+                timeHeaders.forEach(text => {
+                    const th = document.createElement('th');
+                    th.textContent = text;
+                    headerRow.appendChild(th);
+                });
+
+                // Body Rows
+                const tbody = table.createTBody();
+                const timetableMap = new Map(data.map(item => [`${item.day}-${item.time}`, item.course]));
+
+                daysOfWeek.forEach(day => {
+                    const row = tbody.insertRow();
+                    const dayCell = row.insertCell();
+                    dayCell.textContent = day;
+                    dayCell.className = 'day-header';
+
+                    timeSlots.forEach(time => {
+                        const cell = row.insertCell();
+                        if (time === "12:00 - 1:00") {
+                            cell.textContent = "Lunch Break";
+                            cell.className = 'lunch-break';
+                        } else {
+                            cell.textContent = timetableMap.get(`${day}-${time}`) || '';
+                        }
+                    });
+                });
+
+                timetableTableContainer.innerHTML = '';
+                timetableTableContainer.appendChild(table);
+            }
+
+            function openTimetableModal() {
+                const storageKey = getTimetableStorageKey();
+                if (!storageKey) {
+                    showInfoModal('Semester Dates Needed', 'Please set your semester start and end dates first before creating a timetable.');
+                    return;
+                }
+                const timetableData = getEntries(storageKey);
+                const timetableMap = new Map(timetableData.map(item => [`${item.day}-${item.time}`, item.course]));
+
+                let tableHTML = `<table class="class-timetable w-full"><thead><tr><th>Day</th><th>8:00 - 10:00</th><th>10:00 - 12:00</th><th>12:00 - 1:00</th><th>1:00 - 3:00</th><th>3:00 - 5:00</th></tr></thead><tbody>`;
+
+                daysOfWeek.forEach(day => {
+                    tableHTML += `<tr><td class="day-header">${day}</td>`;
+                    timeSlots.forEach(time => {
+                        if (time === "12:00 - 1:00") {
+                            tableHTML += `<td class="lunch-break">Lunch Break</td>`;
+                        } else {
+                            const value = timetableMap.get(`${day}-${time}`) || '';
+                            tableHTML += `<td><input type="text" class="timetable-modal-input" data-day="${day}" data-time="${time}" value="${value}"></td>`;
+                        }
+                    });
+                    tableHTML += `</tr>`;
+                });
+
+                tableHTML += `</tbody></table>`;
+                timetableInputContainer.innerHTML = tableHTML;
+                openModal(timetableModal);
+            }
+            
+            function saveTimetable() {
+                const storageKey = getTimetableStorageKey();
+                if (!storageKey) return;
+
+                const inputs = timetableInputContainer.querySelectorAll('.timetable-modal-input');
+                const newTimetableData = [];
+                inputs.forEach(input => {
+                    if (input.value.trim() !== '') {
+                        newTimetableData.push({
+                            day: input.dataset.day,
+                            time: input.dataset.time,
+                            course: input.value.trim()
+                        });
+                    }
+                });
+
+                saveEntries(storageKey, newTimetableData);
+                closeModal(timetableModal);
+                loadWeeklyClassTimetable();
+            }
+
+            // --- NEW: User Profile Functions ---
+            function checkAndPromptForName() {
+                const userName = localStorage.getItem('auraFlowUserName');
+                if (!userName) {
+                    openModal(namePromptModal);
+                } else {
+                    updateGreeting(userName);
+                }
+            }
+
+            function updateGreeting(name) {
+                const currentHour = new Date().getHours();
+                let greetingText = '';
+                if (currentHour < 12) { greetingText = `Good Morning, ${name}`; } 
+                else if (currentHour < 18) { greetingText = `Good Afternoon, ${name}`; } 
+                else { greetingText = `Good Evening, ${name}`; }
+                
+                greetingElement.innerHTML = ''; // Clear previous greeting
+                greetingText.split('').forEach((char, index) => {
+                    const span = document.createElement('span');
+                    span.textContent = char === ' ' ? '\u00A0' : char; // Handle spaces
+                    span.style.animationDelay = `${index * 0.05}s`;
+                    greetingElement.appendChild(span);
+                });
+            }
+
+
+            // --- NEW: Generic Task Edit Modal Functions ---
+            function openEditTaskModal(id, storageKey, currentText, currentDate) {
+                 currentlyEditingTask = { id, storageKey, text: currentText, date: currentDate };
+                 editTaskInput.value = currentText;
+                 openModal(editTaskModal);
+            }
+
+            function saveEditedTask() {
+                 const newText = editTaskInput.value.trim();
+                 if (newText === '') {
+                     showInfoModal('Empty Content', 'The content cannot be empty.');
+                     return;
+                 }
+                
+                 const { id, storageKey } = currentlyEditingTask;
+                 let items = getEntries(storageKey);
+
+                 if (storageKey.includes('Exam') || storageKey.includes('EndSem')) {
+                     items = items.map(item => item.id == id ? { ...item, course: newText } : item);
+                 } else {
+                     items = items.map(item => item.id == id ? { ...item, text: newText } : item);
+                 }
+
+                 saveEntries(storageKey, items);
+                 closeModal(editTaskModal);
+
+                 // Refresh the appropriate list
+                 if (storageKey === 'auraFlowDailyTasks') loadDailyTasks();
+                 else if (storageKey === 'auraFlowWeeklyTasks') loadWeeklyTasks();
+                 else if (storageKey === 'auraFlowAcademicGoals') loadAcademicGoals();
+                 else if (storageKey === 'auraFlowInternalExam1') renderExamTimetable(storageKey, internalExam1Timetable);
+                 else if (storageKey === 'auraFlowInternalExam2') renderExamTimetable(storageKey, internalExam2Timetable);
+                 else if (storageKey === 'auraFlowEndSemExams') renderExamTimetable(storageKey, endSemTimetable);
+            }
+
+            // --- Event Listeners ---
+            saveButton.addEventListener('click', saveJournalEntry);
+            pastEntriesButton.addEventListener('click', () => openModal(pastEntriesModal));
+            closePastEntriesModalButton.addEventListener('click', () => closeModal(pastEntriesModal));
+            pastEntriesModal.addEventListener('click', (e) => e.target === pastEntriesModal && closeModal(pastEntriesModal));
+            
+            closeViewEntryModalButton.addEventListener('click', () => closeModal(viewEntryModal));
+            viewEntryModal.addEventListener('click', (e) => e.target === viewEntryModal && closeModal(viewEntryModal));
+
+            // Journal Entry Edit/Delete/Save/Cancel Listeners
+            editEntryButton.addEventListener('click', editJournalEntry);
+            saveEditedEntryButton.addEventListener('click', saveEditedJournalEntry);
+            cancelEditButton.addEventListener('click', cancelEditJournalEntry);
+            deleteEntryButton.addEventListener('click', (e) => {
+                const entryId = e.target.closest('#viewEntryModal').dataset.entryId;
+                openDeleteConfirmation('Journal', entryId, 'Are you sure you want to delete this journal entry? This action cannot be undone.');
+            });
+
+            // Confirmation Modal Listeners
+            confirmDeleteButton.addEventListener('click', () => {
+                if (actionTypeToConfirm === 'Journal') {
+                    deleteJournalEntryConfirmed(itemIdToConfirm);
+                } else if (actionTypeToConfirm === 'Special Date') {
+                    removeSpecialDateConfirmed(itemIdToConfirm);
+                } else if (actionTypeToConfirm === 'Semester Note') {
+                    deleteSemesterNoteConfirmed(itemIdToConfirm);
+                }
+                actionTypeToConfirm = null;
+                itemIdToConfirm = null;
+            });
+            cancelDeleteButton.addEventListener('click', () => closeModal(confirmationModal));
+            confirmationModal.addEventListener('click', (e) => e.target === confirmationModal && closeModal(confirmationModal));
+
+            // Info Modal Listener
+            infoOkButton.addEventListener('click', () => closeModal(infoModal));
+            infoModal.addEventListener('click', (e) => e.target === infoModal && closeModal(infoModal));
+
+            // Daily Task Listeners
+            addDailyTaskButton.addEventListener('click', addDailyTask);
+            newDailyTaskInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addDailyTask();
+                }
+            });
+
+            // Weekly Task Listeners
+            addWeeklyTaskButton.addEventListener('click', handleAddWeeklyTaskClick);
+            newWeeklyTaskInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleAddWeeklyTaskClick();
+                }
+            });
+
+            // Weekly Task Type Selection Modal Listeners
+            addGeneralWeeklyTaskButton.addEventListener('click', addWeeklyGeneralTask);
+            planWeeklyDayTaskButton.addEventListener('click', () => {
+                closeModal(weeklyTaskTypeModal, () => {
+                    openModal(weeklyDayPlanModal);
+                });
+            });
+            cancelWeeklyTaskTypeButton.addEventListener('click', () => {
+                newWeeklyTaskInput.value = '';
+                currentWeeklyTaskText = '';
+                closeModal(weeklyTaskTypeModal);
+            });
+            weeklyTaskTypeModal.addEventListener('click', (e) => e.target === weeklyTaskTypeModal && closeModal(weeklyTaskTypeModal, () => {
+                newWeeklyTaskInput.value = '';
+                currentWeeklyTaskText = '';
+            }));
+
+            // Weekly Day Planning Modal Listeners
+            confirmWeeklyDayTaskButton.addEventListener('click', addWeeklyDaySpecificTaskConfirmed);
+            closeWeeklyDayPlanModalButton.addEventListener('click', () => {
+                newWeeklyTaskInput.value = '';
+                currentWeeklyTaskText = '';
+                closeModal(weeklyDayPlanModal);
+            });
+            weeklyDayPlanModal.addEventListener('click', (e) => e.target === weeklyDayPlanModal && closeModal(weeklyDayPlanModal, () => {
+                newWeeklyTaskInput.value = '';
+                currentWeeklyTaskText = '';
+            }));
+
+
+            // Plan for Next Day Listeners
+            planNextDayButton.addEventListener('click', () => {
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(today.getDate() + 1);
+                nextDayDateInput.value = tomorrow.toISOString().split('T')[0]; 
+                loadNextDayTasks(nextDayDateInput.value);
+                openModal(planNextDayModal);
+            });
+            closePlanNextDayModalButton.addEventListener('click', () => closeModal(planNextDayModal));
+            addNextDayTaskButton.addEventListener('click', addNextDayTask);
+            nextDayTaskInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addNextDayTask();
+                }
+            });
+            nextDayDateInput.addEventListener('change', (e) => loadNextDayTasks(e.target.value));
+            planNextDayModal.addEventListener('click', (e) => e.target === planNextDayModal && closeModal(planNextDayModal));
+
+            // Planned Tasks Button Listener
+            viewPlannedTasksButton.addEventListener('click', () => {
+                loadPlannedTasksDisplay();
+                openModal(plannedTasksModal);
+                checklistClockContainer.classList.add('hidden');
+            });
+            closePlannedTasksModalButton.addEventListener('click', () => {
+                closeModal(plannedTasksModal);
+                checklistClockContainer.classList.remove('hidden');
+            });
+            plannedTasksModal.addEventListener('click', (e) => {
+                if(e.target === plannedTasksModal) {
+                    closeModal(plannedTasksModal);
+                    checklistClockContainer.classList.remove('hidden');
+                }
+            });
+
+            // Calendar Listeners
+            viewCalendarButton.addEventListener('click', () => {
+                currentCalendarDate = new Date();
+                renderCalendar(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth());
+                openModal(calendarModal);
+                checklistClockContainer.classList.add('hidden');
+            });
+            closeCalendarModalButton.addEventListener('click', () => {
+                closeModal(calendarModal);
+                checklistClockContainer.classList.remove('hidden');
+            });
+            calendarModal.addEventListener('click', (e) => {
+                if (e.target === calendarModal) {
+                    closeModal(calendarModal);
+                    checklistClockContainer.classList.remove('hidden');
+                }
+            });
+            prevMonthButton.addEventListener('click', (e) => {
+                navigateMonth('prev');
+                e.stopPropagation();
+            });
+            nextMonthButton.addEventListener('click', (e) => {
+                navigateMonth('next');
+                e.stopPropagation();
+            });
+            calendarGrid.addEventListener('click', handleCalendarDayClick);
+
+            // Special Date Modal Listeners
+            closeViewSpecialDateModalButton.addEventListener('click', () => closeModal(viewSpecialDateModal));
+            viewSpecialDateModal.addEventListener('click', (e) => e.target === viewSpecialDateModal && closeModal(viewSpecialDateModal));
+            editSpecialDateButton.addEventListener('click', (e) => {
+                const dateStr = e.target.closest('#viewSpecialDateModal').dataset.date;
+                closeModal(viewSpecialDateModal, () => {
+                    openEditSpecialDateModal(dateStr, true);
+                });
+            });
+            removeSpecialDateButton.addEventListener('click', (e) => {
+                const dateStr = e.target.closest('#viewSpecialDateModal').dataset.date;
+                openDeleteConfirmation('Special Date', dateStr, 'Are you sure you want to remove the name for this date?');
+            });
+
+            closeEditSpecialDateModalButton.addEventListener('click', () => closeModal(editSpecialDateModal));
+            editSpecialDateModal.addEventListener('click', (e) => e.target === editSpecialDateModal && closeModal(editSpecialDateModal));
+            saveSpecialDateButton.addEventListener('click', saveSpecialDate);
+            cancelEditSpecialDateButton.addEventListener('click', () => closeModal(editSpecialDateModal));
+
+            // Semester Hub Listeners (Updated)
+            addStickyNoteButton.addEventListener('click', () => {
+                currentNoteId = null; 
+                stickyNoteTitle.textContent = "Write down your goals for the current semester";
+                stickyNoteInput.value = '';
+                document.querySelector('input[name="noteColor"][value="pink"]').checked = true;
+                openModal(stickyNoteModal);
+            });
+
+            stickyNotesContainer.addEventListener('click', (e) => {
+                const editBtn = e.target.closest('.edit-note-btn');
+                const deleteBtn = e.target.closest('.delete-note-btn');
+
+                if (editBtn) {
+                    const noteId = editBtn.dataset.id;
+                    const notes = getEntries('auraFlowSemesterNotes');
+                    const noteToEdit = notes.find(note => note.id == noteId);
+                    if (noteToEdit) {
+                        currentNoteId = noteId;
+                        stickyNoteTitle.textContent = "Edit Your Goal";
+                        stickyNoteInput.value = noteToEdit.content;
+                        const colorToSelect = noteToEdit.color || 'pink';
+                        document.querySelector(`input[name="noteColor"][value="${colorToSelect}"]`).checked = true;
+                        openModal(stickyNoteModal);
+                    }
+                }
+
+                if (deleteBtn) {
+                    const noteId = deleteBtn.dataset.id;
+                    openDeleteConfirmation('Semester Note', noteId, 'Are you sure you want to delete this note? This action cannot be undone.');
+                }
+            });
+
+            addAcademicGoalButton.addEventListener('click', addAcademicGoal);
+            newAcademicGoalInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addAcademicGoal();
+                }
+            });
+
+            cancelStickyNoteButton.addEventListener('click', () => closeModal(stickyNoteModal));
+            saveStickyNoteButton.addEventListener('click', handleSaveSemesterNote);
+            
+            openSetDatesModalButton.addEventListener('click', () => openModal(setSemesterDatesModal));
+            cancelSetDatesButton.addEventListener('click', () => closeModal(setSemesterDatesModal));
+            saveModalSemesterDatesButton.addEventListener('click', saveSemesterDates);
+            currentSemesterSelect.addEventListener('change', saveCurrentSemester);
+
+            // Exam Timetable Listeners
+            addExamEntryButton.addEventListener('click', () => addExamEntry('auraFlowInternalExam1', newExamCourseInput, newExamDateInput, internalExam1Timetable));
+            internalExam1Timetable.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-exam-btn')) {
+                    deleteExamEntry(e, 'auraFlowInternalExam1', internalExam1Timetable);
+                }
+            });
+
+            addExamEntryButton2.addEventListener('click', () => addExamEntry('auraFlowInternalExam2', newExamCourseInput2, newExamDateInput2, internalExam2Timetable));
+            internalExam2Timetable.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-exam-btn')) {
+                    deleteExamEntry(e, 'auraFlowInternalExam2', internalExam2Timetable);
+                }
+            });
+
+            addEndSemEntryButton.addEventListener('click', () => addExamEntry('auraFlowEndSemExams', newEndSemCourseInput, newEndSemDateInput, endSemTimetable));
+            endSemTimetable.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-exam-btn')) {
+                    deleteExamEntry(e, 'auraFlowEndSemExams', endSemTimetable);
+                }
+            });
+
+            // Weekly Class Timetable Listeners
+            setTimetableBtn.addEventListener('click', openTimetableModal);
+            editTimetableBtn.addEventListener('click', openTimetableModal);
+            saveTimetableButton.addEventListener('click', saveTimetable);
+            cancelTimetableButton.addEventListener('click', () => closeModal(timetableModal));
+
+
+            // Plan Time Modal Listeners
+            closePlanTimeModalButton.addEventListener('click', () => closeModal(planTimeModal));
+            saveTaskTimeButton.addEventListener('click', savePlannedTime);
+            clearTaskTimeButton.addEventListener('click', clearPlannedTime);
+            planTimeModal.addEventListener('click', (e) => e.target === planTimeModal && closeModal(planTimeModal));
+
+            // Notification Listeners
+            closeMorningNotificationButton.addEventListener('click', () => morningNotification.classList.add('hidden'));
+            closeEveningNotificationButton.addEventListener('click', () => eveningNotification.classList.add('hidden'));
+
+            // NEW: Name Prompt & Profile Listeners
+            saveNameButton.addEventListener('click', () => {
+                const userName = userNameInput.value.trim();
+                if (userName) {
+                    localStorage.setItem('auraFlowUserName', userName);
+                    updateGreeting(userName);
+                    closeModal(namePromptModal);
+                } else {
+                    showInfoModal('Name Required', 'Please enter your name to continue.');
+                }
+            });
+
+            profileButton.addEventListener('click', () => {
+                const currentName = localStorage.getItem('auraFlowUserName') || '';
+                editNameInput.value = currentName;
+                openModal(profileModal);
+            });
+
+            closeProfileModalButton.addEventListener('click', () => closeModal(profileModal));
+            cancelProfileButton.addEventListener('click', () => closeModal(profileModal));
+            saveProfileButton.addEventListener('click', () => {
+                const newName = editNameInput.value.trim();
+                if (newName) {
+                    localStorage.setItem('auraFlowUserName', newName);
+                    updateGreeting(newName);
+                    closeModal(profileModal);
+                } else {
+                    showInfoModal('Name Required', 'Name cannot be empty.');
+                }
+            });
+
+            // NEW: Task Edit Modal Listeners
+            saveEditedTaskButton.addEventListener('click', saveEditedTask);
+            cancelEditTaskButton.addEventListener('click', () => closeModal(editTaskModal));
+
+
+            // --- Main Menu Initialization ---
+            const heartColors = ['text-pink-300', 'text-pink-400', 'text-rose-400'];
+            const heartCount = 15;
+            for (let i = 0; i < heartCount; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                const color = heartColors[Math.floor(Math.random() * heartColors.length)];
+                const size = Math.random() * 2 + 1;
+                const duration = Math.random() * 8 + 7;
+                const delay = Math.random() * 10;
+                const left = Math.random() * 100;
+                heart.style.width = `${size}rem`;
+                heart.style.height = `${size}rem`;
+                heart.style.left = `${left}vw`;
+                heart.style.animationDuration = `${duration}s`;
+                heart.style.animationDelay = `${delay}s`;
+                heart.innerHTML = `<svg class="${color}" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>`;
+                heartsContainer.appendChild(heart);
+            }
+
+            // --- App Initialization ---
+            checkAndPromptForName();
+            dailyReset();
+            weeklyReset();
+            transferFutureTasksToDaily();
+
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            populateTimeSelectors();
+            addClockNumbers(checklistClockSvg);
+            setInterval(updateChecklistClock, 1000);
+
+            showMorningNotification();
+            showEveningNotification();
+        });
+    </script>
+</body>
+</html>
