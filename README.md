@@ -131,7 +131,9 @@ A quiet, separate space to reflect on where you want to be in a year, five years
 
 # 🛠️ Tech Stack & Philosophy
 ## Frontend: 
-HTML5, CSS3 (Tailwind CSS), and Vanilla JavaScript.
+- HTML5
+- CSS3 (Tailwind CSS)
+- Vanilla JavaScript.
 
 ## Privacy First: 
 100% Offline-first. AuraFlow uses the browser's localStorage, meaning your data never leaves your device and no internet connection is required.
