@@ -2,8 +2,11 @@
 ## ✨ AuraFlow: An Aesthetic, Private Student Planner
 AuraFlow is a minimalist, distraction-free digital sanctuary designed to help students bring calm and organization to their academic life. Built with a focus on privacy and user experience, AuraFlow combines daily planning, academic tracking, and mindful reflection into one beautiful "glassmorphism" interface.
 
-<img width="1674" height="1572" alt="auraflowicon" src="https://github.com/user-attachments/assets/2a47d394-3ea1-489f-9989-b4bdeb186137" />
+### 🚀 Try AuraFlow Productivity Engine now
 
+ [![Live Demo](https://img.shields.io/badge/Live%20Demo-AuraFlow-ff69b4?style=for-the-badge&logo=github&logoColor=white)](https://auraflowproductivityapp.netlify.app/)
+
+<img width="1674" height="1572" alt="auraflowicon" src="https://github.com/user-attachments/assets/2a47d394-3ea1-489f-9989-b4bdeb186137" />
 
 ## 🌸 Key Features
 ## 🏡 Personalized Dashboard
